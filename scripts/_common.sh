@@ -195,3 +195,77 @@ require_command() {
         return 1
     fi
 }
+
+# ============================================================
+# Required credentials list
+# ============================================================
+REQUIRED_VARS=(
+    AWS_ACCESS_KEY_ID
+    AWS_SECRET_ACCESS_KEY
+    AWS_DEFAULT_REGION
+    DISCORD_BOT_TOKEN
+    DISCORD_GUILD_ID
+    DISCORD_CHANNEL_ID
+    DISCORD_USER_ID
+    GITHUB_TOKEN
+)
+
+# ============================================================
+# Environment loading
+# ============================================================
+
+# load_env_file [ENV_FILE_PATH]
+# Sources the env file and applies defaults for optional variables.
+# If no argument given, uses $ENV_FILE env var or ~/.tiberbu-env as fallback.
+load_env_file() {
+    local env_file="${1:-${HOME}/.tiberbu-env}"
+    if [[ -f "${env_file}" ]]; then
+        log_info "Loading env file: ${env_file}"
+        set -a
+        # shellcheck disable=SC1090
+        source "${env_file}"
+        set +a
+    else
+        log_warn "Env file not found: ${env_file} — expecting variables already in environment"
+    fi
+
+    # Apply defaults for optional variables (no-op if already set)
+    : "${BEDROCK_REGION:=us-west-1}"
+    : "${BEDROCK_MODEL:=global.anthropic.claude-opus-4-6-v1}"
+    : "${FRAPPE_BRANCH:=version-15}"
+    : "${BENCH_SITE:=dev.local}"
+    : "${MARIADB_ROOT_PASSWORD:=tiberbu123}"
+    : "${CLAUDE_STUDIO_PORT:=3000}"
+    : "${OPENCLAW_PORT:=18789}"
+
+    export BEDROCK_REGION BEDROCK_MODEL FRAPPE_BRANCH BENCH_SITE
+    export MARIADB_ROOT_PASSWORD CLAUDE_STUDIO_PORT OPENCLAW_PORT
+
+    log_success "Env file loaded; optional defaults applied"
+}
+
+# validate_credentials [ENV_FILE_PATH]
+# Checks all REQUIRED_VARS and reports ALL missing ones.
+# Returns 1 if any are missing.
+validate_credentials() {
+    local env_file="${1:-${HOME}/.tiberbu-env}"
+    local missing=()
+    local var val
+    for var in "${REQUIRED_VARS[@]}"; do
+        val="${!var:-}"
+        if [[ -z "${val}" ]]; then
+            missing+=("${var}")
+        fi
+    done
+
+    if [[ ${#missing[@]} -gt 0 ]]; then
+        log_error "Missing required environment variables (${#missing[@]}):"
+        for var in "${missing[@]}"; do
+            log_error "  • ${var}"
+        done
+        log_error "Add the above variables to ${env_file} and re-run."
+        return 1
+    fi
+
+    log_success "All ${#REQUIRED_VARS[@]} required credentials are present"
+}

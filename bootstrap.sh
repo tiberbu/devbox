@@ -138,73 +138,9 @@ fi
 mkdir -p "${MARKER_DIR}"
 
 # ============================================================
-# Environment loading
+# Environment loading and credential validation
+# (load_env_file, validate_credentials, REQUIRED_VARS — defined in scripts/_common.sh)
 # ============================================================
-
-# load_env_file — sources ENV_FILE and applies defaults for optional variables
-load_env_file() {
-    if [[ -f "${ENV_FILE}" ]]; then
-        log_info "Loading env file: ${ENV_FILE}"
-        # Export all variables defined in the file
-        set -a
-        # shellcheck disable=SC1090
-        source "${ENV_FILE}"
-        set +a
-    else
-        log_warn "Env file not found: ${ENV_FILE} — expecting variables already in environment"
-    fi
-
-    # Apply defaults for optional variables (no-op if already set)
-    : "${BEDROCK_REGION:=us-west-1}"
-    : "${BEDROCK_MODEL:=global.anthropic.claude-opus-4-6-v1}"
-    : "${FRAPPE_BRANCH:=version-15}"
-    : "${BENCH_SITE:=dev.local}"
-    : "${MARIADB_ROOT_PASSWORD:=tiberbu123}"
-    : "${CLAUDE_STUDIO_PORT:=3000}"
-    : "${OPENCLAW_PORT:=18789}"
-
-    export BEDROCK_REGION BEDROCK_MODEL FRAPPE_BRANCH BENCH_SITE
-    export MARIADB_ROOT_PASSWORD CLAUDE_STUDIO_PORT OPENCLAW_PORT
-
-    log_success "Env file loaded; optional defaults applied"
-}
-
-# ============================================================
-# Credential validation
-# ============================================================
-readonly REQUIRED_VARS=(
-    AWS_ACCESS_KEY_ID
-    AWS_SECRET_ACCESS_KEY
-    AWS_DEFAULT_REGION
-    DISCORD_BOT_TOKEN
-    DISCORD_GUILD_ID
-    DISCORD_CHANNEL_ID
-    DISCORD_USER_ID
-    GITHUB_TOKEN
-)
-
-# validate_credentials — checks all required vars and reports ALL missing ones
-validate_credentials() {
-    local missing=()
-    local var val
-    for var in "${REQUIRED_VARS[@]}"; do
-        val="${!var:-}"
-        if [[ -z "${val}" ]]; then
-            missing+=("${var}")
-        fi
-    done
-
-    if [[ ${#missing[@]} -gt 0 ]]; then
-        log_error "Missing required environment variables (${#missing[@]}):"
-        for var in "${missing[@]}"; do
-            log_error "  • ${var}"
-        done
-        log_error "Add the above variables to ${ENV_FILE} and re-run."
-        return 1
-    fi
-
-    log_success "All ${#REQUIRED_VARS[@]} required credentials are present"
-}
 
 # ============================================================
 # Phase definitions (functions to avoid associative arrays)
@@ -299,10 +235,10 @@ main() {
     fi
 
     # Step 1: Load environment
-    load_env_file
+    load_env_file "${ENV_FILE}"
 
     # Step 2: Validate credentials (always, including dry-run)
-    validate_credentials
+    validate_credentials "${ENV_FILE}"
 
     # Step 3: Execute phases
     if [[ "${DRY_RUN}" == "true" ]]; then
