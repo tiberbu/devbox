@@ -1,0 +1,71 @@
+{
+  "models": {
+    "providers": {
+      "amazon-bedrock": {
+        "endpoint": "https://bedrock-runtime.${BEDROCK_REGION}.amazonaws.com",
+        "credentials": {
+          "accessKeyId": "${AWS_ACCESS_KEY_ID}",
+          "secretAccessKey": "${AWS_SECRET_ACCESS_KEY}"
+        },
+        "models": {
+          "primary": {
+            "id": "${BEDROCK_MODEL}",
+            "maxTokens": 16384
+          }
+        }
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "workspace": "${HOME}/.openclaw/workspace",
+      "primaryModel": "amazon-bedrock:${BEDROCK_MODEL}",
+      "memory": {
+        "search": {
+          "provider": "amazon-bedrock",
+          "model": "amazon.titan-embed-text-v2:0"
+        }
+      }
+    }
+  },
+  "gateway": {
+    "mode": "local",
+    "auth": "token",
+    "port": ${OPENCLAW_PORT},
+    "bind": "loopback"
+  },
+  "channels": {
+    "discord": {
+      "token": "${DISCORD_BOT_TOKEN}",
+      "guild": "${DISCORD_GUILD_ID}",
+      "channels": [
+        {
+          "id": "${DISCORD_CHANNEL_ID}",
+          "streaming": true,
+          "autoPresence": true
+        }
+      ],
+      "allowlist": ["${DISCORD_USER_ID}"]
+    }
+  },
+  "plugins": {
+    "entries": [
+      {
+        "name": "amazon-bedrock",
+        "discovery": true
+      },
+      {
+        "name": "anthropic"
+      },
+      {
+        "name": "acpx"
+      }
+    ]
+  },
+  "hooks": {
+    "internal": ["boot-md", "session-memory"]
+  },
+  "tools": {
+    "profile": "coding"
+  }
+}

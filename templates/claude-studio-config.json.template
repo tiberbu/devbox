@@ -1,0 +1,13 @@
+{
+  "port": ${CLAUDE_STUDIO_PORT},
+  "auth": {
+    "type": "cookie",
+    "cookiePath": "/tmp/ccs.cookie"
+  },
+  "projects": [
+    {
+      "name": "frappe-bench",
+      "path": "${HOME}/frappe-bench"
+    }
+  ]
+}

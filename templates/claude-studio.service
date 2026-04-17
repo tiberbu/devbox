@@ -1,0 +1,18 @@
+[Unit]
+Description=Claude Code Studio
+After=network.target
+
+[Service]
+Type=simple
+User=${USER}
+WorkingDirectory=${HOME}/claude-code-studio
+ExecStart=${HOME}/.nvm/versions/node/v24/bin/node dist/server.js
+Restart=always
+RestartSec=5
+Environment=PORT=${CLAUDE_STUDIO_PORT}
+Environment=HOME=${HOME}
+Environment=PATH=${HOME}/.nvm/versions/node/v24/bin:/usr/local/bin:/usr/bin:/bin
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target
