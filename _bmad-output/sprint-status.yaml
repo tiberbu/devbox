@@ -113,6 +113,6 @@ development_status:
 
   29-fix-s2-1-openclaw-installer-install-openclaw-sh-issues-from-: review  # [quick-dev] Fix: S2.1: OpenClaw Installer (install-openclaw.sh) — issues
 
-  30-s2-3-frappe-bench-installer-install-bench-sh: in-progress  # [dev-story] S2.3: Frappe Bench Installer (install-bench.sh)
+  30-s2-3-frappe-bench-installer-install-bench-sh: review  # [dev-story] S2.3: Frappe Bench Installer (install-bench.sh)
 
   31-fix-s2-2-claude-code-studio-installer-install-studio-sh-issu: review  # [quick-dev] Fix: S2.2: Claude Code Studio Installer (install-studio.sh) 
