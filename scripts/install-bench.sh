@@ -112,7 +112,8 @@ install_bench_cli() {
     export PATH="${HOME}/.local/bin:${PATH}"
 
     # Try plain install first; fall back to --break-system-packages on Ubuntu 24.04+
-    if ! pip3 install frappe-bench 2>/dev/null; then
+    # Note: stderr is NOT suppressed so diagnostic output is preserved on failure
+    if ! pip3 install frappe-bench; then
         log_warn "pip3 install failed — retrying with --break-system-packages (Ubuntu 24.04+)"
         pip3 install frappe-bench --break-system-packages
     fi
@@ -203,7 +204,9 @@ create_site() {
     fi
 
     # Add BENCH_SITE to /etc/hosts (AC-4: 127.0.0.1) if not already present
-    if ! grep -qF "${BENCH_SITE}" /etc/hosts 2>/dev/null; then
+    # Use space-prefix match to avoid false positives from substring hostnames
+    # (e.g. "dev.local" must not match "mydev.local")
+    if ! grep -qF " ${BENCH_SITE}" /etc/hosts 2>/dev/null; then
         log_info "Adding ${BENCH_SITE} → 127.0.0.1 in /etc/hosts"
         printf '127.0.0.1  %s\n' "${BENCH_SITE}" | sudo tee -a /etc/hosts >/dev/null
         log_success "${BENCH_SITE} added to /etc/hosts"

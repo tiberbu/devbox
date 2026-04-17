@@ -116,3 +116,11 @@ development_status:
   30-s2-3-frappe-bench-installer-install-bench-sh: review  # [dev-story] S2.3: Frappe Bench Installer (install-bench.sh)
 
   31-fix-s2-2-claude-code-studio-installer-install-studio-sh-issu: review  # [quick-dev] Fix: S2.2: Claude Code Studio Installer (install-studio.sh) 
+
+  32-qa-s2-3-frappe-bench-installer-install-bench-sh: review  # [playwright-qa] QA: S2.3: Frappe Bench Installer (install-bench.sh)
+
+  33-fix-s2-3-frappe-bench-installer-install-bench-sh-issues-from: review  # [quick-dev] Fix: S2.3: Frappe Bench Installer (install-bench.sh) — issue
+
+  34-qa-s3-1-config-templates-and-workspace-files: review  # [playwright-qa] QA: S3.1: Config Templates and Workspace Files
+
+  35-fix-s3-1-config-templates-and-workspace-files-issues-from-qa: in-progress  # [quick-dev] Fix: S3.1: Config Templates and Workspace Files — issues fro
