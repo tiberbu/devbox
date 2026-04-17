@@ -117,13 +117,26 @@ render_config() {
 
     chmod 600 "${HOME}/.openclaw/openclaw.json"
 
-    # Verify no unresolved ${VAR} placeholders remain
-    # SC2016: single quotes are intentional — we want to grep for the literal string ${
-    # shellcheck disable=SC2016
-    if grep -q '\${' "${HOME}/.openclaw/openclaw.json"; then
-        log_error "Unresolved placeholders in openclaw.json — check required env vars:"
-        # shellcheck disable=SC2016
-        grep '\${' "${HOME}/.openclaw/openclaw.json" >&2
+    # Verify required env var fields are not empty in the rendered config.
+    # envsubst replaces unset variables with empty strings, never leaving ${VAR}
+    # patterns, so grepping for literal '${' is ineffective. Instead we check
+    # that each critical JSON string field contains a non-empty value.
+    local required_env_vars=(
+        AWS_ACCESS_KEY_ID
+        AWS_SECRET_ACCESS_KEY
+        DISCORD_BOT_TOKEN
+    )
+    local missing=()
+    for var in "${required_env_vars[@]}"; do
+        if [[ -z "${!var:-}" ]]; then
+            missing+=("${var}")
+        fi
+    done
+    if (( ${#missing[@]} > 0 )); then
+        log_error "Required env vars are unset or empty; openclaw.json may be invalid:"
+        for var in "${missing[@]}"; do
+            log_error "  ${var} is not set"
+        done
         return 1
     fi
 
@@ -170,6 +183,14 @@ install_service() {
     log_info "Step 5/5: Installing openclaw-gateway systemd user service"
 
     mkdir -p "${HOME}/.config/systemd/user"
+
+    # Resolve the actual nvm-versioned node binary directory
+    # (e.g. /home/ubuntu/.nvm/versions/node/v24.15.0/bin)
+    # nvm never creates a bare v24 alias directory, only full semver paths.
+    local node_bin_dir
+    node_bin_dir="$(dirname "$(command -v node)")"
+    export NODE_BIN_DIR="${node_bin_dir}"
+    log_info "Resolved node binary directory: ${NODE_BIN_DIR}"
 
     render_template \
         "${DEVBOX_DIR}/templates/openclaw-gateway.service" \
