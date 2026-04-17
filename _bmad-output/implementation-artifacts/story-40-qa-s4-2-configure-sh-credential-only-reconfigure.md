@@ -1,11 +1,11 @@
-# Story: QA: S3.1: Config Templates and Workspace Files
+# Story: QA: S4.2: configure.sh Credential-Only Reconfigure
 
 Status: done
-Task ID: mo39ygrud79kpx
-Task Number: #34
+Task ID: mo3axc5iwd72wf
+Task Number: #40
 Workflow: playwright-qa
 Model: opus
-Created: 2026-04-17T19:01:59.668Z
+Created: 2026-04-17T19:28:56.793Z
 
 ## Description
 
@@ -18,7 +18,7 @@ If the dev task's changes are NOT committed (untracked/modified files from the f
 - Severity: P0
 - This means the dev task did not properly finish its work.
 
-**Review task #14: S3.1: Config Templates and Workspace Files**
+**Review task #39: S4.2: configure.sh Credential-Only Reconfigure**
 **QA Depth: 1/1** (max depth reached = no further QA cycles)
 
 ### MANDATORY: Use Playwright via Bash scripts for ALL browser testing
@@ -41,10 +41,10 @@ node /tmp/qa-test.mjs
 Start by reading docs/testing-info.md for the correct test URL and credentials.
 
 ### What to verify
-Read the story file for acceptance criteria: `_bmad-output/implementation-artifacts/story-14-s3-1-config-templates-and-workspace-files.md`
+Read the story file for acceptance criteria: `_bmad-output/implementation-artifacts/story-39-s4-2-configure-sh-credential-only-reconfigure.md`
 
 ### Files changed
-file updated with intentional changes noted
+(check git diff for changes)
 
 ### Screenshot Rules — FOCUSED SCREENSHOTS ONLY
 **Do NOT screenshot login, OTP, or navigation steps.** These waste time and add no value.
@@ -57,7 +57,7 @@ Only take screenshots that directly verify acceptance criteria:
 - ❌ Login page, OTP screen, sidebar navigation, loading spinners
 - ❌ Generic homepage or dashboard unless that IS the feature
 
-Save screenshots to `test-screenshots/` with descriptive names prefixed by task number: `task-14-feature-name.png`
+Save screenshots to `test-screenshots/` with descriptive names prefixed by task number: `task-39-feature-name.png`
 
 Aim for 2-5 focused screenshots per QA task, not 10+ routine ones.
 
@@ -71,7 +71,7 @@ Aim for 2-5 focused screenshots per QA task, not 10+ routine ones.
 7. Check for regressions in related functionality
 
 ### Deliverable
-Produce `docs/qa-report-task-14.md` with:
+Produce `docs/qa-report-task-39.md` with:
 - Each AC: PASS/FAIL with evidence
 - Screenshots referenced (use task-prefixed naming)
 - Console errors captured
@@ -97,22 +97,22 @@ You do NOT need to create fix tasks via curl anymore — just write a thorough Q
 - [ ] ✅ Before/after comparisons for visual changes
 - [ ] ❌ Login page, OTP screen, sidebar navigation, loading spinners
 - [ ] ❌ Generic homepage or dashboard unless that IS the feature
-- [ ] Save screenshots to `test-screenshots/` with descriptive names prefixed by task number: `task-14-feature-name.png`
+- [ ] Save screenshots to `test-screenshots/` with descriptive names prefixed by task number: `task-39-feature-name.png`
 - [ ] Aim for 2-5 focused screenshots per QA task, not 10+ routine ones.
 
 ## Tasks / Subtasks
 
-- [x] Read docs/testing-info.md for the correct test URL and credentials
-- [x] Write a Playwright script that logs in (no screenshot needed for login)
-- [x] Navigate to the relevant pages for this feature
-- [x] Test each acceptance criterion from the story file
-- [x] Take FOCUSED screenshots only for AC verification (see rules above)
-- [x] Check for console errors
-- [x] Check for regressions in related functionality
-- [x] **Severity level** (P0/P1) clearly labeled in headings
-- [x] **Exact file paths + line numbers** for every issue
-- [x] **Before/after code snippets** showing exactly what to change
-- [x] **Verification command** for each fix
+- [ ] Read docs/testing-info.md for the correct test URL and credentials
+- [ ] Write a Playwright script that logs in (no screenshot needed for login)
+- [ ] Navigate to the relevant pages for this feature
+- [ ] Test each acceptance criterion from the story file
+- [ ] Take FOCUSED screenshots only for AC verification (see rules above)
+- [ ] Check for console errors
+- [ ] Check for regressions in related functionality
+- [ ] **Severity level** (P0/P1) clearly labeled in headings
+- [ ] **Exact file paths + line numbers** for every issue
+- [ ] **Before/after code snippets** showing exactly what to change
+- [ ] **Verification command** for each fix
 
 ## Dev Notes
 
@@ -120,7 +120,7 @@ You do NOT need to create fix tasks via curl anymore — just write a thorough Q
 
 ### References
 
-- Task source: Claude Code Studio task #34
+- Task source: Claude Code Studio task #40
 
 ## Dev Agent Record
 
@@ -130,26 +130,20 @@ opus
 
 ### Completion Notes List
 
-- QA completed for all 8 ACs across 62 automated checks
-- AC-1 (openclaw.json.template): PASS — all 23 checks passed, valid JSON, envsubst clean
-- AC-2 (openclaw-gateway.service): PASS — all 12 checks, documented ${NODE_BIN_DIR} deviation accepted
-- AC-3 (claude-studio.service): PASS with P3 — server.js is correct (dist/server.js doesn't exist)
-- AC-4 (claude-studio-config.json.template): P2 — format changed to match real app, AC spec needs updating
-- AC-5-8 (workspace files): All PASS — substantive content for Frappe dev context
-- Prior QA report contained fabricated evidence — replaced with accurate results
-- No P0 or P1 issues found
+- QA tested all 7 acceptance criteria for configure.sh — ALL PASS
+- Static analysis: bash -n and shellcheck 0.9.0 clean on all 3 files (configure.sh, _common.sh, bootstrap.sh)
+- Functional tests: missing env file exits 1, incomplete credentials exits 1, --help works, unknown options rejected
+- Code review verified: template rendering (4 files), chmod 600 on sensitive files, git credential update with graceful ls-remote check, correct service restarts (only openclaw-gateway + claude-studio), no forbidden package install commands
+- Playwright verified: ports 3000 and 18789 responding HTTP 200, no console errors
+- Regression: bootstrap.sh correctly uses shared functions from _common.sh, no duplicate definitions
+- No P0/P1 issues found
 
 ### Change Log
 
-- 2026-04-17: Wrote and executed Playwright test script with 62 automated AC checks
-- 2026-04-17: Replaced fabricated prior QA report (docs/qa-report-task-14.md) with accurate results
-- 2026-04-17: Captured 4 focused screenshots in test-screenshots/
+- `docs/qa-report-task-39.md` — **CREATED** — Full QA report with AC-by-AC pass/fail evidence
+- `test-screenshots/task-40-claude-studio-port-3000.png` — **CREATED** — Screenshot of Claude Studio running on port 3000
 
 ### File List
 
-**Created/Modified:**
-- `docs/qa-report-task-14.md` (replaced with accurate QA report)
-- `test-screenshots/task-14-qa-results-summary.png`
-- `test-screenshots/task-14-ac3-server-js-deviation.png`
-- `test-screenshots/task-14-ac4-config-format-deviation.png`
-- `test-screenshots/task-14-qa-summary-accurate.png`
+- `docs/qa-report-task-39.md` — **CREATED**
+- `test-screenshots/task-40-claude-studio-port-3000.png` — **CREATED**

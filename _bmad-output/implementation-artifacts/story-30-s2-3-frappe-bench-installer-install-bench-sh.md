@@ -1,6 +1,6 @@
 # Story: S2.3: Frappe Bench Installer (install-bench.sh)
 
-Status: complete
+Status: done
 Task ID: mo39dc8eidr9fl
 Task Number: #30
 Workflow: dev-story

@@ -1,6 +1,6 @@
 # Story: S4.1: Verification and Smoke Test (verify.sh)
 
-Status: in-progress
+Status: done
 Task ID: mo3a7hdjixujw5
 Task Number: #37
 Workflow: dev-story
@@ -87,8 +87,8 @@ Story file created by task #12. Read the stor
 
 ## Tasks / Subtasks
 
-- [ ] Implement changes
-- [ ] Verify build passes
+- [x] Implement changes
+- [x] Verify build passes
 
 ## Dev Notes
 
@@ -106,12 +106,17 @@ sonnet
 
 ### Completion Notes List
 
-_(Updated by agent on completion)_
+- Implemented `scripts/verify.sh` — 16-point health check suite with color-coded summary table and Discord notification.
+- All 16 checks implemented across 6 phases aligned with bootstrap.sh phase structure.
+- Checks 1–15 are critical (FAIL → exit 1); check 16 (Discord notification) is best-effort (never affects exit code).
+- Discord notification uses jq for safe JSON construction with fallback to printf.
+- Supports `--phase N` (1–6) for single-phase verification and `--env-file PATH` override.
+- `bash -n` syntax check passes. ShellCheck 0.9.0 clean (zero warnings).
 
 ### Change Log
 
-_(Updated by agent during implementation)_
+- 2026-04-17: Created `scripts/verify.sh` — 16 health checks, summary table, Discord notification, --phase/--env-file flags.
 
 ### File List
 
-_(Updated by agent — list all files created or modified)_
+- `scripts/verify.sh` — created (new file)

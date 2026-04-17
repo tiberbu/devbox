@@ -27,7 +27,7 @@ trap 'error_handler "${BASH_SOURCE[0]}" "${LINENO}" "$?"' ERR
 readonly PHASE_NUM=2
 readonly PHASE_NAME="Node.js"
 readonly TOTAL_PHASES=5
-readonly NVM_VERSION="v0.40.3"
+readonly DEVBOX_NVM_VERSION="v0.40.3"
 readonly NODE_VERSION="24"
 
 # NVM_DIR exported so nvm.sh and child processes pick it up
@@ -88,9 +88,9 @@ check_idempotency() {
 # sources nvm in current session, verifies command -v nvm.
 # ============================================================
 install_nvm() {
-    log_info "Step 1/4: Installing nvm ${NVM_VERSION}"
+    log_info "Step 1/4: Installing nvm ${DEVBOX_NVM_VERSION}"
 
-    local install_url="https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh"
+    local install_url="https://raw.githubusercontent.com/nvm-sh/nvm/${DEVBOX_NVM_VERSION}/install.sh"
     local install_script
     install_script="$(mktemp /tmp/nvm-install-XXXXXX.sh)"
 
@@ -112,7 +112,7 @@ install_nvm() {
         return 1
     fi
 
-    log_success "Step 1/4: nvm ${NVM_VERSION} installed ($(command -v nvm || echo 'shell function'))"
+    log_success "Step 1/4: nvm ${DEVBOX_NVM_VERSION} installed ($(command -v nvm || echo 'shell function'))"
 }
 
 # ============================================================

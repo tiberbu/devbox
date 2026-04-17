@@ -78,8 +78,8 @@ development_status:
   9-s2-1-openclaw-installer-install-openclaw-sh: review  # [create-story] S2.1: OpenClaw Installer (install-openclaw.sh)
   10-s2-2-claude-code-studio-installer-install-studio-sh: review  # [create-story] S2.2: Claude Code Studio Installer (install-studio.sh)
   11-s2-3-frappe-bench-installer-install-bench-sh: review  # [create-story] S2.3: Frappe Bench Installer (install-bench.sh)
-  12-s4-1-verification-and-smoke-test-verify-sh: ready-for-dev  # [create-story] S4.1: Verification and Smoke Test (verify.sh)
-  13-s4-2-configure-sh-credential-only-reconfigure: ready-for-dev  # [create-story] S4.2: configure.sh Credential-Only Reconfigure
+  12-s4-1-verification-and-smoke-test-verify-sh: review  # [create-story] S4.1: Verification and Smoke Test (verify.sh)
+  13-s4-2-configure-sh-credential-only-reconfigure: review  # [create-story] S4.2: configure.sh Credential-Only Reconfigure
 
   14-s3-1-config-templates-and-workspace-files: review  # [dev-story] S3.1: Config Templates and Workspace Files
 
@@ -123,4 +123,16 @@ development_status:
 
   34-qa-s3-1-config-templates-and-workspace-files: review  # [playwright-qa] QA: S3.1: Config Templates and Workspace Files
 
-  35-fix-s3-1-config-templates-and-workspace-files-issues-from-qa: in-progress  # [quick-dev] Fix: S3.1: Config Templates and Workspace Files — issues fro
+  35-fix-s3-1-config-templates-and-workspace-files-issues-from-qa: review  # [quick-dev] Fix: S3.1: Config Templates and Workspace Files — issues fro
+
+  36-fix-s3-1-config-templates-and-workspace-files-issues-from-qa: review  # [quick-dev] Fix: S3.1: Config Templates and Workspace Files — issues fro
+
+  37-s4-1-verification-and-smoke-test-verify-sh: review  # [dev-story] S4.1: Verification and Smoke Test (verify.sh)
+
+  38-qa-s4-1-verification-and-smoke-test-verify-sh: review  # [playwright-qa] QA: S4.1: Verification and Smoke Test (verify.sh)
+
+  39-s4-2-configure-sh-credential-only-reconfigure: review  # [dev-story] S4.2: configure.sh Credential-Only Reconfigure
+
+  40-qa-s4-2-configure-sh-credential-only-reconfigure: review  # [playwright-qa] QA: S4.2: configure.sh Credential-Only Reconfigure
+
+  41-fix-s4-2-configure-sh-credential-only-reconfigure-issues-fro: review  # [quick-dev] Fix: S4.2: configure.sh Credential-Only Reconfigure — issues

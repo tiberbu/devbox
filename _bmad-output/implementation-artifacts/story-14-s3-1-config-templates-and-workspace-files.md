@@ -82,9 +82,11 @@ sonnet
 - All JSON templates validated: `envsubst | python3 -m json.tool` passes for both
 - All 4 templates render to zero unsubstituted `${VAR}` placeholders when tested with dummy values
 - `openclaw.json.template`: port rendered as integer (not string) per JSON template spec
-- `claude-studio-config.json.template`: port rendered as integer, auth cookiePath at /tmp/ccs.cookie
 - Both `.service` files follow correct systemd INI format with all required Environment= lines
 - Workspace files contain substantive, non-trivial content targeting Frappe/ERPNext development context
+- **Post-creation updates (intentional):**
+  - `openclaw-gateway.service` + `claude-studio.service`: hardcoded nvm path replaced with `${NODE_BIN_DIR}` / `${NODE_BIN_PATH}` variables — installer scripts (S4/S5) resolve the actual nvm version path at runtime before calling envsubst
+  - `claude-studio-config.json.template`: updated to actual Claude Code Studio settings.json format (`mcpServers`, `skills`, `slashCommands`, `lang`, `projects`) — static file, no envsubst needed
 
 ### Change Log
 
@@ -96,6 +98,9 @@ sonnet
 - 2026-04-17: Created `workspace/SOUL.md` — agent personality (AC-6)
 - 2026-04-17: Created `workspace/TOOLS.md` — tool reference with bench CLI, git, shell, DB (AC-7)
 - 2026-04-17: Created `workspace/USER.md` — engineer context template with placeholder sections (AC-8)
+- 2026-04-17: Updated `templates/openclaw-gateway.service` — replaced hardcoded nvm path with `${NODE_BIN_DIR}` for flexible version resolution
+- 2026-04-17: Updated `templates/claude-studio.service` — replaced hardcoded nvm paths with `${NODE_BIN_DIR}`/`${NODE_BIN_PATH}`; ExecStart uses `server.js`
+- 2026-04-17: Updated `templates/claude-studio-config.json.template` — changed to actual Claude Code Studio settings.json format (static, no envsubst)
 
 ### File List
 

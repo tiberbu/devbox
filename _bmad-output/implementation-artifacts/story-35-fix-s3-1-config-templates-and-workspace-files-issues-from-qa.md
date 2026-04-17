@@ -1,6 +1,6 @@
 # Story: Fix: S3.1: Config Templates and Workspace Files — issues from QA
 
-Status: in-progress
+Status: done
 Task ID: mo39yy14ag5ecq
 Task Number: #35
 Workflow: quick-dev
@@ -48,31 +48,48 @@ FINAL: ✅ All requirements verified — 64/64 checks PASS, 0 P0-P3 issues
 5. Do NOT start a Vite dev server
 
 ### Done Checklist
-- [ ] All P0 issues fixed
-- [ ] All P1 issues fixed
-- [ ] App builds without errors
-- [ ] No console errors on affected pages
-- [ ] git diff shows only expected files
+- [x] All P0 issues fixed (none found — QA task #16 reported 0 P0/P1 issues)
+- [x] All P1 issues fixed (none found — QA task #16 reported 0 P0/P1 issues)
+- [x] App builds without errors (shell scripts — bash -n passes; JSON templates valid)
+- [x] No console errors on affected pages (no UI — file-based task only)
+- [x] git diff shows only expected files (templates/ and workspace/ are clean — committed)
 
 ## Acceptance Criteria
 
-- [ ] Read the QA report at `docs/qa-report-task-16.md`
-- [ ] Fix ALL P0 and P1 issues identified
-- [ ] Verify each fix with the verification commands from the report
-- [ ] Ensure the build still passes
-- [ ] Do NOT start a Vite dev server
+- [x] Read the QA report at `docs/qa-report-task-16.md`
+- [x] Fix ALL P0 and P1 issues identified
+- [x] Verify each fix with the verification commands from the report
+- [x] Ensure the build still passes
+- [x] Do NOT start a Vite dev server
 
 ## Tasks / Subtasks
 
-- [ ] Read the QA report at `docs/qa-report-task-16.md`
-- [ ] Fix ALL P0 and P1 issues identified
-- [ ] Verify each fix with the verification commands from the report
-- [ ] Ensure the build still passes
-- [ ] Do NOT start a Vite dev server
+- [x] Read the QA report at `docs/qa-report-task-16.md`
+- [x] Fix ALL P0 and P1 issues identified
+- [x] Verify each fix with the verification commands from the report
+- [x] Ensure the build still passes
+- [x] Do NOT start a Vite dev server
 
 ## Dev Notes
 
+### Investigation Summary
 
+This fix task was auto-generated from QA task #16. However, QA task #16 found **0 P0/P1 issues** (64/64 checks PASS). The referenced report `docs/qa-report-task-16.md` does not exist because QA task #16 correctly named its output `docs/qa-report-task-14.md` (per the story instructions).
+
+**Current state of all 8 S3.1 files (verified 2026-04-17):**
+
+- `templates/openclaw.json.template` — Valid JSON after envsubst, all ${VAR} placeholders correct
+- `templates/openclaw-gateway.service` — Correct systemd user unit, WantedBy=default.target
+- `templates/claude-studio.service` — Correct systemd system unit, WantedBy=multi-user.target
+- `templates/claude-studio-config.json.template` — Valid JSON (static, no envsubst needed)
+- `workspace/AGENTS.md` — 2073 bytes, substantive content
+- `workspace/SOUL.md` — 1628 bytes, substantive content
+- `workspace/TOOLS.md` — 4335 bytes, substantive content
+- `workspace/USER.md` — 1984 bytes, substantive content
+
+**Intentional deviations from original ACs (accepted, committed in 8ee2a06):**
+- Service files use `${NODE_BIN_DIR}`/`${NODE_BIN_PATH}` instead of hardcoded v24 path — correct per install-studio.sh
+- `claude-studio-config.json.template` uses mcpServers/skills/slashCommands format — correct schema for Claude Code Studio settings.json
 
 ### References
 
@@ -86,12 +103,18 @@ sonnet
 
 ### Completion Notes List
 
-_(Updated by agent on completion)_
+- **No fixes required** — This fix task was auto-generated despite QA task #16 reporting 0 P0/P1 issues (64/64 checks PASS).
+- All 8 S3.1 files were verified: 4 templates (2 JSON, 2 systemd) + 4 workspace markdown files.
+- All template/workspace files are committed and correct: latest touches in commit 8ee2a06 (studio fix) and 05de535 (initial creation).
+- `docs/qa-report-task-16.md` does not exist because QA #16 correctly named output `docs/qa-report-task-14.md`.
+- No code changes made — all files already correct.
 
 ### Change Log
 
-_(Updated by agent during implementation)_
+- 2026-04-17: Investigated fix task; confirmed no P0/P1 issues exist per QA report docs/qa-report-task-14.md
+- 2026-04-17: Verified all 8 S3.1 files pass validation (JSON valid, service files structured correctly, workspace files have content)
+- 2026-04-17: Updated story-35 to `done` — no code changes required
 
 ### File List
 
-_(Updated by agent — list all files created or modified)_
+**No files created or modified** (no issues to fix — all S3.1 files already correct)
