@@ -1,0 +1,118 @@
+# Sprint Status
+# generated: 2026-04-17
+# last_updated: 2026-04-17
+# project: Tiberbu DevBox
+# project_key: devbox
+# tracking_system: kanban-api
+# story_location: "_bmad-output/implementation-artifacts/"
+
+# AI AGENT CALIBRATION:
+# =====================
+# Sprint length: 1 day (AI agent day)
+# Velocity: 30-50 points/sprint
+# 3-point story: ~30-90 min (AI agent) vs 1-2 days (human)
+# Total: 35 points = 1 sprint (1 AI day) / ~3 human weeks
+#
+# Timeline:
+#   AI agents:  1 day  (35 pts, single sprint)
+#   Humans:     2-3 weeks (35 pts across 3-4 sprints)
+
+# DEPENDENCY GRAPH:
+# =================
+# S1.1 (bootstrap core) ─┬──▶ S1.2 (system deps) ──┐
+#                         ├──▶ S1.3 (node.js)     ──┼──▶ S2.3 (frappe bench)
+#                         └──▶ S4.2 (configure.sh)  │
+#                                                    ├──▶ S2.1 (openclaw)
+# S3.1 (templates) ─────────────────────────────────┼──▶ S2.2 (claude studio)
+#                                                    │
+#                                                    └──▶ S4.1 (verification)
+
+# SPRINT PLAN:
+# =============
+# Sprint 1 — Foundation (11 pts, ~3-4 hrs AI):
+#   S1.1 + S3.1 (parallel, no deps) → S1.2 + S1.3 (parallel, need S1.1)
+#
+# Sprint 1 continued — App Stack (11 pts, ~4-5 hrs AI):
+#   S2.1 + S2.2 (parallel, need S1.3 + S3.1) → S2.3 (needs S1.2 + S1.3)
+#
+# Sprint 1 continued — Polish (8 pts, ~2-3 hrs AI):
+#   S4.1 (needs all installers) → S4.2 (needs S1.1 + S3.1)
+
+development_status:
+
+  # === Epic 1: Bootstrap Core Framework (11 pts) ===
+  epic-1-bootstrap-core: backlog
+  1-1-bootstrap-core-framework: ready-for-dev    # S1: bootstrap.sh + _common.sh (3 pts)
+  1-2-system-dependencies-installer: backlog      # S2: apt, MariaDB, Redis (5 pts)
+  1-3-node-installer: backlog                     # S3: nvm, Node.js v24, yarn (3 pts)
+  epic-1-retrospective: optional
+
+  # === Epic 2: Application Stack (11 pts) ===
+  epic-2-application-stack: backlog
+  2-1-openclaw-installer: backlog                 # S4: npm openclaw, config, systemd (3 pts)
+  2-2-claude-studio-installer: backlog            # S5: clone, build, systemd (3 pts)
+  2-3-frappe-bench-installer: backlog             # S6: bench init, site creation (5 pts)
+  epic-2-retrospective: optional
+
+  # === Epic 3: Configuration & Templates (5 pts) ===
+  epic-3-config-templates: backlog
+  3-1-config-templates-workspace: ready-for-dev   # S7: 4 templates + 4 workspace files (5 pts)
+  epic-3-retrospective: optional
+
+  # === Epic 4: Verification & Polish (8 pts) ===
+  epic-4-verification-polish: backlog
+  4-1-verification-smoke-test: backlog            # S8: 16 health checks, Discord notify (5 pts)
+  4-2-configure-sh-reconfigure: backlog           # S9: credential-only reconfigure (3 pts)
+  epic-4-retrospective: optional
+
+  2-devbox-planning-architecture-and-implementation-plan: review  # [planning] DevBox Planning - Architecture and implementation plan
+  3-devbox-solutioning-technical-architecture-and-sprint-stories: review  # [solutioning] DevBox Solutioning - Technical architecture and sprint stori
+  4-devbox-solutioning-technical-architecture-and-sprint-stories: review  # [sprint-planning] DevBox Solutioning - Technical architecture and sprint stori
+  5-s1-1-bootstrap-sh-core-framework-common-sh: review  # [create-story] S1.1: bootstrap.sh Core Framework + _common.sh
+  1-devbox-domain-research-analyze-current-ec2-setup-for-bootstr: review  # [domain-research] DevBox Domain Research - Analyze current EC2 setup for boots
+
+  6-s3-1-config-templates-and-workspace-files: review  # [create-story] S3.1: Config Templates and Workspace Files
+
+  7-s1-2-system-dependencies-installer-install-system-sh: review  # [create-story] S1.2: System Dependencies Installer (install-system.sh)
+  8-s1-3-node-js-installer-install-node-sh: review  # [create-story] S1.3: Node.js Installer (install-node.sh)
+  9-s2-1-openclaw-installer-install-openclaw-sh: review  # [create-story] S2.1: OpenClaw Installer (install-openclaw.sh)
+  10-s2-2-claude-code-studio-installer-install-studio-sh: review  # [create-story] S2.2: Claude Code Studio Installer (install-studio.sh)
+  11-s2-3-frappe-bench-installer-install-bench-sh: review  # [create-story] S2.3: Frappe Bench Installer (install-bench.sh)
+  12-s4-1-verification-and-smoke-test-verify-sh: ready-for-dev  # [create-story] S4.1: Verification and Smoke Test (verify.sh)
+  13-s4-2-configure-sh-credential-only-reconfigure: ready-for-dev  # [create-story] S4.2: configure.sh Credential-Only Reconfigure
+
+  14-s3-1-config-templates-and-workspace-files: review  # [dev-story] S3.1: Config Templates and Workspace Files
+
+  15-s1-1-bootstrap-sh-core-framework-common-sh: review  # [dev-story] S1.1: bootstrap.sh Core Framework + _common.sh
+
+  16-qa-s3-1-config-templates-and-workspace-files: review  # [playwright-qa] QA: S3.1: Config Templates and Workspace Files
+
+  17-qa-s1-1-bootstrap-sh-core-framework-common-sh: review  # [playwright-qa] QA: S1.1: bootstrap.sh Core Framework + _common.sh
+
+  18-fix-s1-1-bootstrap-sh-core-framework-common-sh-issues-from-q: review  # [quick-dev] Fix: S1.1: bootstrap.sh Core Framework + _common.sh — issues
+
+  19-s1-2-system-dependencies-installer-install-system-sh: review  # [dev-story] S1.2: System Dependencies Installer (install-system.sh)
+
+  20-qa-s1-2-system-dependencies-installer-install-system-sh: review  # [playwright-qa] QA: S1.2: System Dependencies Installer (install-system.sh)
+
+  21-s1-3-node-js-installer-install-node-sh: review  # [dev-story] S1.3: Node.js Installer (install-node.sh)
+
+  22-fix-s1-2-system-dependencies-installer-install-system-sh-iss: review  # [quick-dev] Fix: S1.2: System Dependencies Installer (install-system.sh)
+
+  23-qa-s1-3-node-js-installer-install-node-sh: review  # [playwright-qa] QA: S1.3: Node.js Installer (install-node.sh)
+
+  24-fix-s1-3-node-js-installer-install-node-sh-issues-from-qa: review  # [quick-dev] Fix: S1.3: Node.js Installer (install-node.sh) — issues from
+
+  25-s2-1-openclaw-installer-install-openclaw-sh: review  # [dev-story] S2.1: OpenClaw Installer (install-openclaw.sh)
+
+  26-qa-s2-1-openclaw-installer-install-openclaw-sh: review  # [playwright-qa] QA: S2.1: OpenClaw Installer (install-openclaw.sh)
+
+  27-s2-2-claude-code-studio-installer-install-studio-sh: review  # [dev-story] S2.2: Claude Code Studio Installer (install-studio.sh)
+
+  28-qa-s2-2-claude-code-studio-installer-install-studio-sh: review  # [playwright-qa] QA: S2.2: Claude Code Studio Installer (install-studio.sh)
+
+  29-fix-s2-1-openclaw-installer-install-openclaw-sh-issues-from-: review  # [quick-dev] Fix: S2.1: OpenClaw Installer (install-openclaw.sh) — issues
+
+  30-s2-3-frappe-bench-installer-install-bench-sh: in-progress  # [dev-story] S2.3: Frappe Bench Installer (install-bench.sh)
+
+  31-fix-s2-2-claude-code-studio-installer-install-studio-sh-issu: review  # [quick-dev] Fix: S2.2: Claude Code Studio Installer (install-studio.sh) 
