@@ -18,6 +18,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # shellcheck source=scripts/_common.sh
+# shellcheck disable=SC1091
 source "${SCRIPT_DIR}/scripts/_common.sh"
 
 # ERR trap — passes script path, line number, and exit code to error_handler
