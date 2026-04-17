@@ -120,52 +120,64 @@ clone_or_pull() {
 }
 
 # ============================================================
-# AC-3: Build from source
-# npm install (with retry for network flakiness), then npm run build.
-# Asserts dist/server.js exists after the build completes.
+# AC-3: Install npm dependencies
+# npm install (with retry for network flakiness).
+# No build step needed — app runs directly from server.js at repo root.
+# Asserts server.js exists after npm install completes.
 # ============================================================
 build_studio() {
-    log_info "Step 4/6: Building Claude Code Studio from source"
+    log_info "Step 4/6: Installing Claude Code Studio dependencies"
 
     cd "${HOME}/claude-code-studio"
 
     retry 3 15 npm install
-    log_info "npm install complete — running build"
+    log_info "npm install complete"
 
-    npm run build
+    # No build step required — app runs from server.js at repository root
+    log_info "No build step required — app runs from server.js"
 
-    if [[ ! -f "${HOME}/claude-code-studio/dist/server.js" ]]; then
-        log_error "Build failed — dist/server.js not found after npm run build"
+    if [[ ! -f "${HOME}/claude-code-studio/server.js" ]]; then
+        log_error "Installation failed — server.js not found in claude-code-studio"
         return 1
     fi
 
-    log_success "Build successful — dist/server.js exists"
-    log_success "Step 4/6: Build complete"
+    log_success "server.js present — app entry point verified"
+    log_success "Step 4/6: Dependencies installed"
 }
 
 # ============================================================
 # AC-4: Configuration rendering
-# Renders claude-studio-config.json.template into config.json and
-# asserts that no unresolved ${VAR} placeholders remain.
+# Renders claude-studio-config.json.template into config.json only if
+# config.json does not already exist (preserves manual configuration).
+# Asserts that no unresolved ${VAR} placeholders remain after rendering.
 # ============================================================
 render_config() {
     log_info "Step 5/6: Rendering Claude Studio configuration"
 
+    local config_path="${HOME}/claude-code-studio/config.json"
+
+    # Skip rendering if config.json already exists — preserve manual/existing config
+    if [[ -f "${config_path}" ]]; then
+        log_info "config.json already exists — skipping template render (preserving existing config)"
+        log_success "Step 5/6: Configuration present at ${config_path}"
+        return 0
+    fi
+
     render_template \
         "${DEVBOX_DIR}/templates/claude-studio-config.json.template" \
-        "${HOME}/claude-code-studio/config.json"
+        "${config_path}"
 
     # Verify no unresolved ${VAR} placeholders remain
     # SC2016: single quotes intentional — grep for literal string ${
     # shellcheck disable=SC2016
-    if grep -q '\${' "${HOME}/claude-code-studio/config.json"; then
+    if grep -q '\${' "${config_path}"; then
         log_error "Unresolved placeholders in config.json — check required env vars:"
         # shellcheck disable=SC2016
-        grep '\${' "${HOME}/claude-code-studio/config.json" >&2
+        grep '\${' "${config_path}" >&2
         return 1
     fi
 
-    log_success "config.json rendered at ${HOME}/claude-code-studio/config.json"
+    log_success "config.json rendered at ${config_path}"
     log_success "Step 5/6: Configuration rendered"
 }
 
@@ -173,9 +185,17 @@ render_config() {
 # AC-5: Systemd system service
 # Renders the unit to a temp file (avoids privileged envsubst),
 # copies to /etc/systemd/system/, reloads daemon, enables, starts.
+# NODE_BIN_PATH and NODE_BIN_DIR are resolved from the active nvm node
+# so the service file references the exact versioned binary path.
 # ============================================================
 install_service() {
     log_info "Step 6/6: Installing claude-studio systemd system service"
+
+    # Resolve node binary path from the currently active nvm node
+    NODE_BIN_PATH="$(command -v node)"
+    NODE_BIN_DIR="$(dirname "${NODE_BIN_PATH}")"
+    export NODE_BIN_PATH NODE_BIN_DIR
+    log_info "node binary: ${NODE_BIN_PATH}"
 
     local tmp_svc="/tmp/claude-studio.service.rendered"
 
@@ -235,9 +255,9 @@ verify_phase() {
     fi
     log_success "claude-studio service is active"
 
-    # Assert HTTP 200 on the configured port
+    # Assert HTTP 200 on the configured port (follow redirects — app redirects / to /login)
     local http_code
-    http_code="$(curl -s -o /dev/null -w "%{http_code}" \
+    http_code="$(curl -sL -o /dev/null -w "%{http_code}" \
         "http://localhost:${CLAUDE_STUDIO_PORT}" 2>/dev/null || true)"
     if [[ "${http_code}" == "200" ]]; then
         log_success "Claude Studio HTTP 200 on port ${CLAUDE_STUDIO_PORT}"
