@@ -1,0 +1,5 @@
+
+# Playwright / node deps (installed by configure.sh for local testing)
+node_modules/
+package-lock.json
+package.json
