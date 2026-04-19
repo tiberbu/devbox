@@ -70,11 +70,45 @@ Once complete, the agent is live in your Discord channel. Give it commands!
 
 ## Getting Your Credentials
 
-### Discord Bot Token
-1. Go to https://discord.com/developers/applications
-2. Create New Application → Bot → Reset Token → Copy
-3. Enable **Message Content Intent** under Bot settings
-4. Invite bot to the Tiberbu server with appropriate permissions
+### Discord Setup (All 4 Parameters)
+
+You need four Discord values. Here's how to get each one:
+
+#### `DISCORD_BOT_TOKEN` — Your Bot's Auth Token
+
+1. Go to the [Discord Developer Portal](https://discord.com/developers/applications)
+2. Click **New Application** → give it a name (e.g. "Tiberbu DevBox") → **Create**
+3. In the left sidebar, click **Bot**
+4. Click **Reset Token** → **Yes, do it!** → **Copy** the token immediately (you won't see it again)
+5. Scroll down and enable these **Privileged Gateway Intents**:
+   - ✅ **Message Content Intent**
+   - ✅ **Server Members Intent** (optional but recommended)
+6. **Invite the bot to your server:**
+   - In the left sidebar, click **OAuth2**
+   - Under **OAuth2 URL Generator**, check the `bot` scope
+   - Under **Bot Permissions**, check: `Send Messages`, `Read Message History`, `Create Public Threads`, `Send Messages in Threads`, `Manage Messages`
+   - Copy the generated URL → open it in your browser → select your server → **Authorize**
+
+#### `DISCORD_GUILD_ID` — Your Server ID
+
+1. Open Discord (desktop app or browser)
+2. Go to **User Settings** (gear icon) → **Advanced** → enable **Developer Mode**
+3. Right-click your **server name** in the left sidebar
+4. Click **Copy Server ID** — that's your Guild ID
+
+#### `DISCORD_CHANNEL_ID` — The Channel for Your Agent
+
+1. With Developer Mode enabled (see above)
+2. Right-click the **text channel** where you want the agent to listen
+3. Click **Copy Channel ID**
+
+#### `DISCORD_USER_ID` — Your Personal User ID
+
+1. With Developer Mode enabled (see above)
+2. Right-click **your own username** (in a message or the member list)
+3. Click **Copy User ID**
+
+> **Tip:** All IDs are long numbers like `1229822594778267740`. If you see something shorter or with letters, that's not right.
 
 ### AWS Bedrock Access
 - Need access to `anthropic.claude-*` models in your chosen region
