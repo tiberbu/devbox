@@ -217,21 +217,28 @@ install_service() {
 # Polls systemctl --user is-active for up to 10 seconds.
 # ============================================================
 wait_for_service() {
-    local max_attempts=10
-    local attempt=0
-    log_info "Waiting for openclaw-gateway to stabilize (up to ${max_attempts}s)..."
+    local max_wait=90
+    local elapsed=0
+    log_info "Waiting for openclaw-gateway to stabilize (up to ${max_wait}s)..."
 
-    while (( attempt < max_attempts )); do
+    while (( elapsed < max_wait )); do
+        # Check both systemd state AND port actually listening
         if systemctl --user is-active --quiet openclaw-gateway 2>/dev/null; then
-            log_success "openclaw-gateway is active (attempt $((attempt + 1))/${max_attempts})"
-            return 0
+            if ss -tlnp 2>/dev/null | grep -q ":${OPENCLAW_PORT}"; then
+                log_success "openclaw-gateway is active and port ${OPENCLAW_PORT} is listening (${elapsed}s elapsed)"
+                return 0
+            fi
         fi
-        attempt=$(( attempt + 1 ))
-        sleep 1
+        elapsed=$(( elapsed + 5 ))
+        if (( elapsed % 15 == 0 )); then
+            log_info "Still waiting... (${elapsed}s/${max_wait}s)"
+        fi
+        sleep 5
     done
 
-    log_error "openclaw-gateway did not become active within ${max_attempts} seconds"
+    log_error "openclaw-gateway did not become active within ${max_wait} seconds"
     systemctl --user status openclaw-gateway --no-pager 2>&1 | tail -20 || true
+    journalctl --user -u openclaw-gateway --no-pager -n 30 2>&1 || true
     return 1
 }
 

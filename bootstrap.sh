@@ -55,11 +55,11 @@ Environment file (~/.tiberbu-env)
     AWS_DEFAULT_REGION      AWS region (e.g. us-west-1)
     DISCORD_BOT_TOKEN       Discord bot token
     DISCORD_GUILD_ID        Discord guild/server ID
-    DISCORD_CHANNEL_ID      Discord channel ID
     DISCORD_USER_ID         Discord user ID
     GITHUB_TOKEN            GitHub personal access token
 
   OPTIONAL (defaults shown):
+    DISCORD_CHANNEL_ID      Discord channel ID (for verification only)
     BEDROCK_REGION          AWS Bedrock region        (default: us-west-1)
     BEDROCK_MODEL           Bedrock model ID          (default: global.anthropic.claude-opus-4-6-v1)
     FRAPPE_BRANCH           Frappe framework branch   (default: version-15)
@@ -138,6 +138,33 @@ fi
 mkdir -p "${MARKER_DIR}"
 
 # ============================================================
+# Privilege handling
+# Phase 1 (system deps) needs root for apt/MariaDB/systemd.
+# Phases 2-5 MUST run as a regular user (nvm, bench, pip, systemd --user).
+#
+# If invoked via sudo, detect the real user from SUDO_USER and re-exec
+# phases 2-5 with `su - $REAL_USER`.
+# ============================================================
+REAL_USER="${SUDO_USER:-$(whoami)}"
+REAL_HOME="$(eval echo "~${REAL_USER}")"
+
+# Override HOME for template rendering when running as root via sudo
+if [[ "$(id -u)" -eq 0 && -n "${SUDO_USER:-}" ]]; then
+    export HOME="${REAL_HOME}"
+    log_info "Running as root (via sudo) — real user: ${REAL_USER}, HOME: ${HOME}"
+fi
+
+# run_as_user CMD [ARGS...]
+# Executes command as $REAL_USER if we are currently root; otherwise runs directly.
+run_as_user() {
+    if [[ "$(id -u)" -eq 0 && -n "${SUDO_USER:-}" ]]; then
+        su - "${REAL_USER}" -c "cd '${SCRIPT_DIR}' && source scripts/_common.sh && load_env_file '${ENV_FILE}' && $*"
+    else
+        "$@"
+    fi
+}
+
+# ============================================================
 # Environment loading and credential validation
 # (load_env_file, validate_credentials, REQUIRED_VARS — defined in scripts/_common.sh)
 # ============================================================
@@ -201,7 +228,26 @@ run_phase() {
         return 1
     fi
 
-    bash "${pscript}"
+    if [[ "${phase_num}" -eq 1 ]]; then
+        # Phase 1 needs root (apt, MariaDB, Redis, wkhtmltopdf)
+        if [[ "$(id -u)" -ne 0 ]]; then
+            log_info "Phase 1 requires root — re-running with sudo"
+            sudo -E bash "${pscript}"
+        else
+            bash "${pscript}"
+        fi
+    else
+        # Phases 2-5 must run as regular user (nvm, pip, bench, systemd --user)
+        if [[ "$(id -u)" -eq 0 && -n "${SUDO_USER:-}" ]]; then
+            log_info "Dropping privileges to ${REAL_USER} for phase ${phase_num}"
+            su - "${REAL_USER}" -c "
+                export ENV_FILE='${ENV_FILE}'
+                cd '${SCRIPT_DIR}' && bash '${pscript}'
+            "
+        else
+            bash "${pscript}"
+        fi
+    fi
 
     local phase_end
     local elapsed

@@ -2,70 +2,100 @@
   "models": {
     "providers": {
       "amazon-bedrock": {
-        "endpoint": "https://bedrock-runtime.${BEDROCK_REGION}.amazonaws.com",
-        "credentials": {
-          "accessKeyId": "${AWS_ACCESS_KEY_ID}",
-          "secretAccessKey": "${AWS_SECRET_ACCESS_KEY}"
-        },
-        "models": {
-          "primary": {
+        "baseUrl": "https://bedrock-runtime.${BEDROCK_REGION}.amazonaws.com",
+        "api": "bedrock-converse-stream",
+        "auth": "aws-sdk",
+        "models": [
+          {
             "id": "${BEDROCK_MODEL}",
+            "name": "Claude (Bedrock)",
+            "reasoning": true,
+            "input": ["text", "image"],
+            "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+            "contextWindow": 200000,
             "maxTokens": 16384
           }
-        }
+        ]
       }
     }
   },
   "agents": {
     "defaults": {
       "workspace": "${HOME}/.openclaw/workspace",
-      "primaryModel": "amazon-bedrock:${BEDROCK_MODEL}",
-      "memory": {
-        "search": {
-          "provider": "amazon-bedrock",
-          "model": "amazon.titan-embed-text-v2:0"
-        }
+      "model": {
+        "primary": "amazon-bedrock/${BEDROCK_MODEL}"
+      },
+      "memorySearch": {
+        "provider": "bedrock",
+        "model": "amazon.titan-embed-text-v2:0"
       }
     }
   },
   "gateway": {
     "mode": "local",
-    "auth": "token",
+    "auth": {
+      "mode": "token"
+    },
     "port": ${OPENCLAW_PORT},
     "bind": "loopback"
   },
   "channels": {
     "discord": {
+      "enabled": true,
       "token": "${DISCORD_BOT_TOKEN}",
-      "guild": "${DISCORD_GUILD_ID}",
-      "channels": [
-        {
-          "id": "${DISCORD_CHANNEL_ID}",
-          "streaming": true,
-          "autoPresence": true
+      "groupPolicy": "open",
+      "guilds": {
+        "${DISCORD_GUILD_ID}": {
+          "users": ["${DISCORD_USER_ID}"],
+          "requireMention": true
         }
-      ],
-      "allowlist": ["${DISCORD_USER_ID}"]
+      },
+      "streaming": {
+        "mode": "block",
+        "block": { "enabled": true },
+        "chunkMode": "newline"
+      },
+      "autoPresence": {
+        "enabled": true
+      }
     }
   },
-  "plugins": {
-    "entries": [
-      {
-        "name": "amazon-bedrock",
-        "discovery": true
-      },
-      {
-        "name": "anthropic"
-      },
-      {
-        "name": "acpx"
-      }
-    ]
-  },
   "hooks": {
-    "internal": ["boot-md", "session-memory"]
+    "enabled": true,
+    "internal": {
+      "enabled": true,
+      "entries": {
+        "boot-md": { "enabled": true },
+        "session-memory": { "enabled": true }
+      }
+    }
   },
   "tools": {
     "profile": "coding"
+  },
+  "plugins": {
+    "entries": {
+      "amazon-bedrock": {
+        "enabled": true,
+        "config": {
+          "discovery": {
+            "enabled": true,
+            "region": "${BEDROCK_REGION}",
+            "providerFilter": ["anthropic", "amazon"],
+            "refreshInterval": 3600
+          }
+        }
+      },
+      "anthropic": {
+        "enabled": true
+      },
+      "acpx": {
+        "enabled": true,
+        "config": {
+          "timeoutSeconds": 1800,
+          "permissionMode": "approve-all"
+        }
+      }
+    }
   }
 }

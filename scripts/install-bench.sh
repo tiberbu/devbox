@@ -194,6 +194,21 @@ create_site() {
 
     cd "${BENCH_DIR}"
 
+    # Ensure MariaDB root can authenticate via password over TCP.
+    # On Ubuntu 24.04, MariaDB defaults to unix_socket auth for root,
+    # which causes "Access denied" when bench connects via 127.0.0.1.
+    # This ALTER USER is idempotent — safe to run even if already set.
+    log_info "Ensuring MariaDB root password auth for TCP connections"
+    if sudo mysql -u root -e \
+        "ALTER USER 'root'@'localhost' IDENTIFIED VIA mysql_native_password USING PASSWORD('${MARIADB_ROOT_PASSWORD}'); FLUSH PRIVILEGES;" 2>/dev/null; then
+        log_success "MariaDB root password auth configured via unix socket"
+    elif mysql -u root -p"${MARIADB_ROOT_PASSWORD}" -e "SELECT 1;" &>/dev/null; then
+        log_info "MariaDB root password auth already working"
+    else
+        log_error "Cannot authenticate to MariaDB as root — check MARIADB_ROOT_PASSWORD"
+        return 1
+    fi
+
     if [[ -d "${BENCH_DIR}/sites/${BENCH_SITE}" ]]; then
         log_info "Site ${BENCH_SITE} already exists — skipping bench new-site"
     else

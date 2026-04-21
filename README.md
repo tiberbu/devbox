@@ -20,12 +20,12 @@ AWS_ACCESS_KEY_ID=your-aws-access-key
 AWS_SECRET_ACCESS_KEY=your-aws-secret-key
 AWS_DEFAULT_REGION=us-west-1
 DISCORD_BOT_TOKEN=your-discord-bot-token
-DISCORD_GUILD_ID=1229822594778267740
-DISCORD_CHANNEL_ID=your-channel-id
+DISCORD_GUILD_ID=your-server-id
 DISCORD_USER_ID=your-discord-user-id
 GITHUB_TOKEN=ghp_your-github-token
 
 # === OPTIONAL (defaults shown) ===
+# DISCORD_CHANNEL_ID=your-channel-id  # only needed for verification test message
 # BEDROCK_REGION=us-west-1
 # BEDROCK_MODEL=global.anthropic.claude-opus-4-6-v1
 # FRAPPE_BRANCH=version-15
@@ -38,8 +38,10 @@ EOF
 
 ### 3. Run the bootstrap
 
+The script needs `sudo` for Phase 1 (apt packages, MariaDB, Redis). Phases 2–5 run as your regular user automatically.
+
 ```bash
-curl -sL https://raw.githubusercontent.com/tiberbu/devbox/main/bootstrap.sh | bash
+curl -sL https://raw.githubusercontent.com/tiberbu/devbox/main/bootstrap.sh | sudo -E bash
 ```
 
 Or clone and run:
@@ -48,12 +50,14 @@ Or clone and run:
 git clone https://github.com/tiberbu/devbox.git
 cd devbox
 chmod +x bootstrap.sh
-./bootstrap.sh
+sudo -E ./bootstrap.sh
 ```
+
+> **Why `sudo -E`?** Phase 1 installs system packages as root. The `-E` flag preserves your environment so `~/.tiberbu-env` is found. Phases 2–5 automatically drop back to your regular user for nvm, pip, bench, and systemd user services.
 
 ### 4. Start working from Discord
 
-Once complete, the agent is live in your Discord channel. Give it commands!
+Once complete, the agent is live in your Discord channel. **You need to @mention the bot** to talk to it (e.g. `@Tiberbu DevBox what's up?`). The bot uses `requireMention: true` by default so it doesn't respond to every message in the channel.
 
 ## What Gets Installed
 
@@ -81,8 +85,9 @@ You need four Discord values. Here's how to get each one:
 3. In the left sidebar, click **Bot**
 4. Click **Reset Token** → **Yes, do it!** → **Copy** the token immediately (you won't see it again)
 5. Scroll down and enable these **Privileged Gateway Intents**:
+   - ✅ **Presence Intent**
+   - ✅ **Server Members Intent**
    - ✅ **Message Content Intent**
-   - ✅ **Server Members Intent** (optional but recommended)
 6. **Invite the bot to your server:**
    - In the left sidebar, click **OAuth2**
    - Under **OAuth2 URL Generator**, check the `bot` scope
@@ -160,3 +165,14 @@ devbox/
 │   └── USER.md
 └── README.md
 ```
+
+## Changelog
+
+### 2026-04-21 — Bootstrap reliability fixes
+
+1. **Root/user privilege split** — Phase 1 runs as root for apt/MariaDB; Phases 2–5 auto-drop to regular user via `SUDO_USER`
+2. **OpenClaw config schema** — Rewrote `openclaw.json.template` to match OpenClaw 2026.4.15 schema (fixed auth, plugins.entries, hooks, guilds structure)
+3. **Service restart loops** — Gateway service now uses `openclaw gateway run` (foreground) instead of `gateway start` which delegates to systemctl. Added `OPENCLAW_NO_RESPAWN=1`, increased `RestartSec` to 60s
+4. **MariaDB password auth** — `install-bench.sh` now runs `ALTER USER` to enable `mysql_native_password` auth before `bench new-site`, fixing "Access denied" on TCP connections
+5. **Service startup timeout** — Increased `wait_for_service` from 10s to 90s with port-listening check (gateway needs ~45s to fully boot)
+6. **Docs** — Added Presence Intent to bot setup, documented `@mention` requirement, clarified `sudo -E` usage
