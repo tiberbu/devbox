@@ -66,6 +66,9 @@
     }
   },
   "hooks": {
+    "enabled": true,
+    "token": "${OPENCLAW_HOOKS_TOKEN}",
+    "path": "/hooks",
     "internal": {
       "enabled": true,
       "entries": {

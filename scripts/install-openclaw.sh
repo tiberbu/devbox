@@ -111,11 +111,21 @@ render_config() {
 
     mkdir -p "${HOME}/.openclaw"
 
+    # Generate a random hooks token for OpenClaw webhook API
+    # This token is shared with Claude Studio so it can send notifications
+    OPENCLAW_HOOKS_TOKEN="$(openssl rand -hex 24)"
+    export OPENCLAW_HOOKS_TOKEN
+    log_info "Generated hooks token for OpenClaw webhook API"
+
     render_template \
         "${DEVBOX_DIR}/templates/openclaw.json.template" \
         "${HOME}/.openclaw/openclaw.json"
 
     chmod 600 "${HOME}/.openclaw/openclaw.json"
+
+    # Save hooks token to a file so Phase 5 (Claude Studio) can read it
+    printf '%s' "${OPENCLAW_HOOKS_TOKEN}" > "${HOME}/.openclaw/.hooks-token"
+    chmod 600 "${HOME}/.openclaw/.hooks-token"
 
     # Verify required env var fields are not empty in the rendered config.
     # envsubst replaces unset variables with empty strings, never leaving ${VAR}

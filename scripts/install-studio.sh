@@ -30,7 +30,7 @@ trap 'error_handler "${BASH_SOURCE[0]}" "${LINENO}" "$?"' ERR
 readonly PHASE_NUM=5
 readonly PHASE_NAME="Claude Code Studio"
 readonly TOTAL_PHASES=5
-readonly TOTAL_STEPS=7
+readonly TOTAL_STEPS=8
 
 # Defensive defaults for optional/system variables
 : "${CLAUDE_STUDIO_PORT:=3000}"
@@ -67,7 +67,7 @@ check_idempotency() {
 # in non-interactive (script) context where ~/.bashrc is not sourced.
 # ============================================================
 source_nvm() {
-    log_info "Step 1/7: Sourcing nvm"
+    log_info "Step 1/8: Sourcing nvm"
 
     export NVM_DIR="${HOME}/.nvm"
     # shellcheck disable=SC1090,SC1091
@@ -79,7 +79,7 @@ source_nvm() {
     fi
 
     log_info "npm $(npm -v) available"
-    log_success "Step 1/7: nvm sourced — npm available"
+    log_success "Step 1/8: nvm sourced — npm available"
 }
 
 # ============================================================
@@ -89,7 +89,7 @@ source_nvm() {
 # against the private repository without an interactive prompt.
 # ============================================================
 setup_git_credentials() {
-    log_info "Step 2/7: Configuring git credentials"
+    log_info "Step 2/8: Configuring git credentials"
 
     git config --global credential.helper store
 
@@ -97,7 +97,7 @@ setup_git_credentials() {
     printf 'https://%s@github.com\n' "${GITHUB_TOKEN}" > "${HOME}/.git-credentials"
     chmod 600 "${HOME}/.git-credentials"
 
-    log_success "Step 2/7: Git credentials configured (~/.git-credentials mode 600)"
+    log_success "Step 2/8: Git credentials configured (~/.git-credentials mode 600)"
 }
 
 # ============================================================
@@ -106,7 +106,7 @@ setup_git_credentials() {
 # clone from a stale/partial directory before deciding clone vs pull.
 # ============================================================
 clone_or_pull() {
-    log_info "Step 3/7: Cloning or updating claude-code-studio repository"
+    log_info "Step 3/8: Cloning or updating claude-code-studio repository"
 
     if [[ -d "${HOME}/claude-code-studio/.git" ]]; then
         log_info "Repository already cloned — running git pull"
@@ -117,7 +117,7 @@ clone_or_pull() {
             "${HOME}/claude-code-studio"
     fi
 
-    log_success "Step 3/7: Repository ready at ${HOME}/claude-code-studio"
+    log_success "Step 3/8: Repository ready at ${HOME}/claude-code-studio"
 }
 
 # ============================================================
@@ -127,7 +127,7 @@ clone_or_pull() {
 # Asserts server.js exists after npm install completes.
 # ============================================================
 build_studio() {
-    log_info "Step 4/7: Installing Claude Code Studio dependencies"
+    log_info "Step 4/8: Installing Claude Code Studio dependencies"
 
     cd "${HOME}/claude-code-studio"
 
@@ -143,7 +143,7 @@ build_studio() {
     fi
 
     log_success "server.js present — app entry point verified"
-    log_success "Step 4/7: Dependencies installed"
+    log_success "Step 4/8: Dependencies installed"
 }
 
 # ============================================================
@@ -153,7 +153,7 @@ build_studio() {
 # Skips if settings.json already exists (preserves manual config).
 # ============================================================
 render_claude_code_config() {
-    log_info "Step 6/7: Configuring Claude Code CLI for Bedrock"
+    log_info "Step 7/8: Configuring Claude Code CLI for Bedrock"
 
     local claude_dir="${HOME}/.claude"
     local settings_path="${claude_dir}/settings.json"
@@ -162,7 +162,7 @@ render_claude_code_config() {
 
     if [[ -f "${settings_path}" ]]; then
         log_info "~/.claude/settings.json already exists — preserving existing config"
-        log_success "Step 6/7: Claude Code CLI config present"
+        log_success "Step 7/8: Claude Code CLI config present"
         return 0
     fi
 
@@ -173,7 +173,7 @@ render_claude_code_config() {
     chmod 600 "${settings_path}"
 
     log_success "~/.claude/settings.json rendered (Bedrock enabled, region: ${BEDROCK_REGION:-us-west-1})"
-    log_success "Step 6/7: Claude Code CLI configured for Bedrock"
+    log_success "Step 7/8: Claude Code CLI configured for Bedrock"
 }
 
 # ============================================================
@@ -182,14 +182,14 @@ render_claude_code_config() {
 # Asserts that no unresolved ${VAR} placeholders remain after rendering.
 # ============================================================
 render_config() {
-    log_info "Step 5/7: Rendering Claude Studio configuration"
+    log_info "Step 5/8: Rendering Claude Studio configuration"
 
     local config_path="${HOME}/claude-code-studio/config.json"
 
     # Skip rendering if config.json already exists — preserve manual/existing config
     if [[ -f "${config_path}" ]]; then
         log_info "config.json already exists — skipping template render (preserving existing config)"
-        log_success "Step 5/7: Configuration present at ${config_path}"
+        log_success "Step 5/8: Configuration present at ${config_path}"
         return 0
     fi
 
@@ -208,7 +208,54 @@ render_config() {
     fi
 
     log_success "config.json rendered at ${config_path}"
-    log_success "Step 5/7: Configuration rendered"
+    log_success "Step 5/8: Configuration rendered"
+}
+
+# ============================================================
+# AC-4c: Claude Studio .env file
+# Creates ~/claude-code-studio/.env with OpenClaw webhook integration
+# and Discord notification channel. Reads the hooks token generated
+# by Phase 4 (install-openclaw.sh).
+# Skips if .env already exists (preserves manual config).
+# ============================================================
+render_studio_env() {
+    log_info "Step 6/8: Creating Claude Studio .env for OpenClaw integration"
+
+    local env_path="${HOME}/claude-code-studio/.env"
+
+    if [[ -f "${env_path}" ]]; then
+        log_info ".env already exists — preserving existing config"
+        log_success "Step 6/8: Claude Studio .env present"
+        return 0
+    fi
+
+    # Read the hooks token generated by Phase 4
+    local hooks_token_file="${HOME}/.openclaw/.hooks-token"
+    if [[ -f "${hooks_token_file}" ]]; then
+        OPENCLAW_HOOKS_TOKEN="$(cat "${hooks_token_file}")"
+        export OPENCLAW_HOOKS_TOKEN
+        log_info "Read OpenClaw hooks token from ${hooks_token_file}"
+    else
+        # Fallback: try to extract from openclaw.json
+        OPENCLAW_HOOKS_TOKEN="$(python3 -c "import json; print(json.load(open('${HOME}/.openclaw/openclaw.json'))['hooks']['token'])" 2>/dev/null || true)"
+        export OPENCLAW_HOOKS_TOKEN
+        if [[ -n "${OPENCLAW_HOOKS_TOKEN}" ]]; then
+            log_info "Extracted hooks token from openclaw.json"
+        else
+            log_warn "No hooks token found — Studio webhook notifications won't work until configured"
+            OPENCLAW_HOOKS_TOKEN="REPLACE_ME"
+            export OPENCLAW_HOOKS_TOKEN
+        fi
+    fi
+
+    render_template \
+        "${DEVBOX_DIR}/templates/claude-studio.env.template" \
+        "${env_path}"
+
+    chmod 600 "${env_path}"
+
+    log_success ".env rendered at ${env_path} (OpenClaw integration configured)"
+    log_success "Step 6/8: Claude Studio .env created"
 }
 
 # ============================================================
@@ -219,7 +266,7 @@ render_config() {
 # so the service file references the exact versioned binary path.
 # ============================================================
 install_service() {
-    log_info "Step 7/7: Installing claude-studio systemd system service"
+    log_info "Step 8/8: Installing claude-studio systemd system service"
 
     # Resolve node binary path from the currently active nvm node
     NODE_BIN_PATH="$(command -v node)"
@@ -242,7 +289,7 @@ install_service() {
     sudo systemctl start claude-studio
     log_info "claude-studio service started"
 
-    log_success "Step 7/7: Service installed and started"
+    log_success "Step 8/8: Service installed and started"
 }
 
 # ============================================================
@@ -328,6 +375,7 @@ main() {
     clone_or_pull
     build_studio
     render_config
+    render_studio_env
     render_claude_code_config
     install_service
     wait_for_service

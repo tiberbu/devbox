@@ -9,6 +9,7 @@ WorkingDirectory=${HOME}/claude-code-studio
 ExecStart=${NODE_BIN_PATH} server.js
 Restart=always
 RestartSec=5
+EnvironmentFile=${HOME}/claude-code-studio/.env
 Environment=PORT=${CLAUDE_STUDIO_PORT}
 Environment=HOME=${HOME}
 Environment=PATH=${NODE_BIN_DIR}:/usr/local/bin:/usr/bin:/bin

@@ -158,3 +158,88 @@ cat /tmp/openclaw/openclaw-$(date +%Y-%m-%d).log
 # Claude Studio
 journalctl -u claude-studio -n 100
 ```
+
+---
+
+## Claude Code Studio API
+
+Claude Code Studio runs at `http://localhost:3000` and provides REST APIs for task management and BMAD workflows.
+
+**Auth cookie:** `/tmp/ccs.cookie`
+
+### BMAD Command Endpoint
+
+Forward any `bmad` command from users to Studio:
+```bash
+curl -s -b /tmp/ccs.cookie -X POST http://localhost:3000/api/bmad/command \
+  -H "Content-Type: application/json" \
+  -d '{"command": "bmad list"}'
+```
+
+### Task API
+
+```bash
+# List all tasks
+curl -s -b /tmp/ccs.cookie http://localhost:3000/api/tasks
+
+# Get a specific task
+curl -s -b /tmp/ccs.cookie http://localhost:3000/api/tasks/<id>
+
+# Create a task
+curl -s -b /tmp/ccs.cookie -X POST http://localhost:3000/api/tasks \
+  -H "Content-Type: application/json" \
+  -d '{"title":"...","description":"...","workdir":"/path/to/project","status":"bmad_workflow","notes":"[bmad-workflow:dev-story]"}'
+
+# Update a task
+curl -s -b /tmp/ccs.cookie -X PUT http://localhost:3000/api/tasks/<id> \
+  -H "Content-Type: application/json" \
+  -d '{"status":"done"}'
+
+# Delete a task
+curl -s -b /tmp/ccs.cookie -X DELETE http://localhost:3000/api/tasks/<id>
+
+# Bulk move tasks
+curl -s -b /tmp/ccs.cookie -X POST http://localhost:3000/api/tasks/bulk-move \
+  -H "Content-Type: application/json" \
+  -d '{"ids":[1,2,3],"status":"done"}'
+```
+
+### Projects API
+
+```bash
+# List projects
+curl -s -b /tmp/ccs.cookie http://localhost:3000/api/projects
+
+# Create a project
+curl -s -b /tmp/ccs.cookie -X POST http://localhost:3000/api/projects \
+  -H "Content-Type: application/json" \
+  -d '{"name":"my-project","path":"/home/ubuntu/projects/my-project"}'
+```
+
+### BMAD Workflow Types
+
+Use `notes: "[bmad-workflow:<type>]"` + `status: "bmad_workflow"` to trigger BMAD agents:
+
+- `domain-research` — Research the problem domain
+- `planning` — Create implementation plan
+- `ux-design` — Design user experience
+- `solutioning` — Technical architecture
+- `sprint-planning` — Break into sprint stories
+- `create-story` — Create a user story
+- `dev-story` — Implement a development story
+- `readiness-check` — Pre-implementation review
+- `code-review` — Review code changes
+- `playwright-qa` — Write Playwright tests
+
+### Task Chaining
+
+Chain tasks to run sequentially:
+```bash
+curl -s -b /tmp/ccs.cookie -X POST http://localhost:3000/api/tasks \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Step 1","chain_id":"my-chain","sort_order":1,"status":"bmad_workflow","notes":"[bmad-workflow:planning]"}'
+
+curl -s -b /tmp/ccs.cookie -X POST http://localhost:3000/api/tasks \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Step 2","chain_id":"my-chain","sort_order":2,"after":1,"status":"bmad_workflow","notes":"[bmad-workflow:dev-story]"}'
+```
