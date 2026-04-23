@@ -1,0 +1,14 @@
+{
+  "env": {
+    "CLAUDE_CODE_USE_BEDROCK": "1",
+    "AWS_ACCESS_KEY_ID": "${AWS_ACCESS_KEY_ID}",
+    "AWS_SECRET_ACCESS_KEY": "${AWS_SECRET_ACCESS_KEY}",
+    "AWS_REGION": "${BEDROCK_REGION}",
+    "ANTHROPIC_MODEL": "${BEDROCK_MODEL}",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "${BEDROCK_MODEL}",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
+  },
+  "model": "sonnet",
+  "autoUpdatesChannel": "latest",
+  "skipDangerousModePermissionPrompt": true
+}

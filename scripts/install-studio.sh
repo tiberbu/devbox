@@ -30,6 +30,7 @@ trap 'error_handler "${BASH_SOURCE[0]}" "${LINENO}" "$?"' ERR
 readonly PHASE_NUM=5
 readonly PHASE_NAME="Claude Code Studio"
 readonly TOTAL_PHASES=5
+readonly TOTAL_STEPS=7
 
 # Defensive defaults for optional/system variables
 : "${CLAUDE_STUDIO_PORT:=3000}"
@@ -66,7 +67,7 @@ check_idempotency() {
 # in non-interactive (script) context where ~/.bashrc is not sourced.
 # ============================================================
 source_nvm() {
-    log_info "Step 1/6: Sourcing nvm"
+    log_info "Step 1/7: Sourcing nvm"
 
     export NVM_DIR="${HOME}/.nvm"
     # shellcheck disable=SC1090,SC1091
@@ -78,7 +79,7 @@ source_nvm() {
     fi
 
     log_info "npm $(npm -v) available"
-    log_success "Step 1/6: nvm sourced — npm available"
+    log_success "Step 1/7: nvm sourced — npm available"
 }
 
 # ============================================================
@@ -88,7 +89,7 @@ source_nvm() {
 # against the private repository without an interactive prompt.
 # ============================================================
 setup_git_credentials() {
-    log_info "Step 2/6: Configuring git credentials"
+    log_info "Step 2/7: Configuring git credentials"
 
     git config --global credential.helper store
 
@@ -96,7 +97,7 @@ setup_git_credentials() {
     printf 'https://%s@github.com\n' "${GITHUB_TOKEN}" > "${HOME}/.git-credentials"
     chmod 600 "${HOME}/.git-credentials"
 
-    log_success "Step 2/6: Git credentials configured (~/.git-credentials mode 600)"
+    log_success "Step 2/7: Git credentials configured (~/.git-credentials mode 600)"
 }
 
 # ============================================================
@@ -105,7 +106,7 @@ setup_git_credentials() {
 # clone from a stale/partial directory before deciding clone vs pull.
 # ============================================================
 clone_or_pull() {
-    log_info "Step 3/6: Cloning or updating claude-code-studio repository"
+    log_info "Step 3/7: Cloning or updating claude-code-studio repository"
 
     if [[ -d "${HOME}/claude-code-studio/.git" ]]; then
         log_info "Repository already cloned — running git pull"
@@ -116,7 +117,7 @@ clone_or_pull() {
             "${HOME}/claude-code-studio"
     fi
 
-    log_success "Step 3/6: Repository ready at ${HOME}/claude-code-studio"
+    log_success "Step 3/7: Repository ready at ${HOME}/claude-code-studio"
 }
 
 # ============================================================
@@ -126,7 +127,7 @@ clone_or_pull() {
 # Asserts server.js exists after npm install completes.
 # ============================================================
 build_studio() {
-    log_info "Step 4/6: Installing Claude Code Studio dependencies"
+    log_info "Step 4/7: Installing Claude Code Studio dependencies"
 
     cd "${HOME}/claude-code-studio"
 
@@ -142,24 +143,53 @@ build_studio() {
     fi
 
     log_success "server.js present — app entry point verified"
-    log_success "Step 4/6: Dependencies installed"
+    log_success "Step 4/7: Dependencies installed"
 }
 
 # ============================================================
-# AC-4: Configuration rendering
+# AC-4b: Claude Code CLI Bedrock configuration
+# Renders ~/.claude/settings.json so Claude Code CLI uses Bedrock
+# instead of requiring an Anthropic API key.
+# Skips if settings.json already exists (preserves manual config).
+# ============================================================
+render_claude_code_config() {
+    log_info "Step 6/7: Configuring Claude Code CLI for Bedrock"
+
+    local claude_dir="${HOME}/.claude"
+    local settings_path="${claude_dir}/settings.json"
+
+    mkdir -p "${claude_dir}"
+
+    if [[ -f "${settings_path}" ]]; then
+        log_info "~/.claude/settings.json already exists — preserving existing config"
+        log_success "Step 6/7: Claude Code CLI config present"
+        return 0
+    fi
+
+    render_template \
+        "${DEVBOX_DIR}/templates/claude-settings.json.template" \
+        "${settings_path}"
+
+    chmod 600 "${settings_path}"
+
+    log_success "~/.claude/settings.json rendered (Bedrock enabled, region: ${BEDROCK_REGION:-us-west-1})"
+    log_success "Step 6/7: Claude Code CLI configured for Bedrock"
+}
+
+# ============================================================
 # Renders claude-studio-config.json.template into config.json only if
 # config.json does not already exist (preserves manual configuration).
 # Asserts that no unresolved ${VAR} placeholders remain after rendering.
 # ============================================================
 render_config() {
-    log_info "Step 5/6: Rendering Claude Studio configuration"
+    log_info "Step 5/7: Rendering Claude Studio configuration"
 
     local config_path="${HOME}/claude-code-studio/config.json"
 
     # Skip rendering if config.json already exists — preserve manual/existing config
     if [[ -f "${config_path}" ]]; then
         log_info "config.json already exists — skipping template render (preserving existing config)"
-        log_success "Step 5/6: Configuration present at ${config_path}"
+        log_success "Step 5/7: Configuration present at ${config_path}"
         return 0
     fi
 
@@ -178,7 +208,7 @@ render_config() {
     fi
 
     log_success "config.json rendered at ${config_path}"
-    log_success "Step 5/6: Configuration rendered"
+    log_success "Step 5/7: Configuration rendered"
 }
 
 # ============================================================
@@ -189,7 +219,7 @@ render_config() {
 # so the service file references the exact versioned binary path.
 # ============================================================
 install_service() {
-    log_info "Step 6/6: Installing claude-studio systemd system service"
+    log_info "Step 7/7: Installing claude-studio systemd system service"
 
     # Resolve node binary path from the currently active nvm node
     NODE_BIN_PATH="$(command -v node)"
@@ -212,7 +242,7 @@ install_service() {
     sudo systemctl start claude-studio
     log_info "claude-studio service started"
 
-    log_success "Step 6/6: Service installed and started"
+    log_success "Step 7/7: Service installed and started"
 }
 
 # ============================================================
@@ -286,6 +316,7 @@ main() {
     clone_or_pull
     build_studio
     render_config
+    render_claude_code_config
     install_service
     wait_for_service
     verify_phase
