@@ -117,6 +117,11 @@ clone_or_pull() {
             "${HOME}/claude-code-studio"
     fi
 
+    # Ensure no stale auth state exists — user must set their own password
+    # on first access via the /setup page
+    rm -f "${HOME}/claude-code-studio/data/auth.json"
+    rm -f "${HOME}/claude-code-studio/data/sessions-auth.json"
+
     log_success "Step 3/8: Repository ready at ${HOME}/claude-code-studio"
 }
 
