@@ -55,11 +55,11 @@ Environment file (~/.tiberbu-env)
     AWS_DEFAULT_REGION      AWS region (e.g. us-west-1)
     DISCORD_BOT_TOKEN       Discord bot token
     DISCORD_GUILD_ID        Discord guild/server ID
+    DISCORD_CHANNEL_ID      Discord channel ID (bot's home channel)
     DISCORD_USER_ID         Discord user ID
     GITHUB_TOKEN            GitHub personal access token
 
   OPTIONAL (defaults shown):
-    DISCORD_CHANNEL_ID      Discord channel ID (for verification only)
     BEDROCK_REGION          AWS Bedrock region        (default: us-west-1)
     BEDROCK_MODEL           Bedrock model ID          (default: global.anthropic.claude-opus-4-6-v1)
     FRAPPE_BRANCH           Frappe framework branch   (default: version-15)

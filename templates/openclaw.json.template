@@ -43,11 +43,16 @@
     "discord": {
       "enabled": true,
       "token": "${DISCORD_BOT_TOKEN}",
-      "groupPolicy": "open",
+      "groupPolicy": "allowlist",
       "guilds": {
         "${DISCORD_GUILD_ID}": {
           "users": ["${DISCORD_USER_ID}"],
-          "requireMention": true
+          "requireMention": false,
+          "channels": {
+            "${DISCORD_CHANNEL_ID}": {
+              "enabled": true
+            }
+          }
         }
       },
       "streaming": {

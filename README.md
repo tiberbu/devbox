@@ -29,6 +29,7 @@ AWS_SECRET_ACCESS_KEY=your-aws-secret-key
 AWS_DEFAULT_REGION=us-west-1
 DISCORD_BOT_TOKEN=your-discord-bot-token
 DISCORD_GUILD_ID=your-server-id
+DISCORD_CHANNEL_ID=your-channel-id
 DISCORD_USER_ID=your-discord-user-id
 GITHUB_TOKEN=ghp_your-github-token
 
@@ -92,7 +93,9 @@ cd ~/frappe-bench && bench --site dev.local doctor
 
 ### 5. Start working from Discord
 
-Once complete, the agent is live in your Discord channel. **You need to @mention the bot** to talk to it (e.g. `@Tiberbu DevBox what's up?`). The bot uses `requireMention: true` by default so it doesn't respond to every message in the channel.
+Once complete, the agent is live in your designated Discord channel. Just type a message — **no @mention needed**. The bot is configured to respond to all messages in that specific channel.
+
+In other channels on the server, the bot won't respond (it only listens in the channel you specified with `DISCORD_CHANNEL_ID`).
 
 ## What Gets Installed
 
@@ -137,7 +140,7 @@ You need an IAM user with Bedrock access. The same credentials power both OpenCl
 
 ### Discord Setup
 
-You need three Discord values. Here's how to get each one:
+You need four Discord values. Here's how to get each one:
 
 #### `DISCORD_BOT_TOKEN` — Your Bot's Auth Token
 
@@ -161,6 +164,17 @@ You need three Discord values. Here's how to get each one:
 2. Go to **User Settings** (gear icon) → **Advanced** → enable **Developer Mode**
 3. Right-click your **server name** in the left sidebar
 4. Click **Copy Server ID** — that's your Guild ID
+
+#### `DISCORD_CHANNEL_ID` — The Bot's Home Channel
+
+This is the channel where the bot responds to **every message** (no @mention needed). Create a dedicated channel for it:
+
+1. In your Discord server, create a new text channel (e.g. `#devbox` or `#agent`)
+2. With Developer Mode enabled (see above)
+3. Right-click the **text channel** you just created
+4. Click **Copy Channel ID**
+
+> **Tip:** The bot only auto-responds in this channel. In all other channels on the server, it stays silent.
 
 #### `DISCORD_USER_ID` — Your Personal User ID
 
