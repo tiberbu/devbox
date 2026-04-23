@@ -91,7 +91,16 @@ systemctl status claude-studio
 cd ~/frappe-bench && bench --site dev.local doctor
 ```
 
-### 5. Start working from Discord
+### 5. Set up Claude Code Studio
+
+1. Open `http://<your-ec2-ip>:3000` in your browser (or use SSH port forwarding: `ssh -L 3000:localhost:3000 ubuntu@<ip>`)
+2. You'll be redirected to the **Setup** page on first visit
+3. Choose an admin password — this is your password for the Studio web UI
+4. Once logged in, you'll see the kanban board for managing coding tasks and BMAD workflows
+
+> **Note:** No default password is set — you create it on first access.
+
+### 6. Start working from Discord
 
 Once complete, the agent is live in your designated Discord channel. Just type a message — **no @mention needed**. The bot is configured to respond to all messages in that specific channel.
 
