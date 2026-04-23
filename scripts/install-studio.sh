@@ -286,12 +286,24 @@ verify_phase() {
     log_success "claude-studio service is active"
 
     # Assert HTTP 200 on the configured port (follow redirects — app redirects / to /login)
+    # Retry a few times since Node apps may take a moment to bind the port after systemd reports active
     local http_code
-    http_code="$(curl -sL -o /dev/null -w "%{http_code}" \
-        "http://localhost:${CLAUDE_STUDIO_PORT}" 2>/dev/null || true)"
-    if [[ "${http_code}" == "200" ]]; then
-        log_success "Claude Studio HTTP 200 on port ${CLAUDE_STUDIO_PORT}"
-    else
+    local http_attempt=0
+    local http_max=6
+    while (( http_attempt < http_max )); do
+        http_code="$(curl -sL -o /dev/null -w "%{http_code}" \
+            "http://localhost:${CLAUDE_STUDIO_PORT}" 2>/dev/null || true)"
+        if [[ "${http_code}" == "200" ]]; then
+            log_success "Claude Studio HTTP 200 on port ${CLAUDE_STUDIO_PORT}"
+            break
+        fi
+        http_attempt=$(( http_attempt + 1 ))
+        if (( http_attempt < http_max )); then
+            log_info "HTTP check returned ${http_code:-000} — retrying in 5s (${http_attempt}/${http_max})"
+            sleep 5
+        fi
+    done
+    if [[ "${http_code}" != "200" ]]; then
         log_error "Claude Studio HTTP check failed (code: ${http_code:-no response}) on port ${CLAUDE_STUDIO_PORT}"
         return 1
     fi

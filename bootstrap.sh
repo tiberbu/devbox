@@ -133,9 +133,14 @@ if [[ -n "${PHASE_FILTER}" ]]; then
 fi
 
 # ============================================================
-# Ensure runtime directory exists
+# Ensure runtime directory exists and is writable by the real user
+# (Phase 1 runs as root, Phases 2-5 run as the regular user —
+# both need to write log files and marker files here)
 # ============================================================
 mkdir -p "${MARKER_DIR}"
+chmod 1777 "${MARKER_DIR}" 2>/dev/null || true
+# Make existing files writable if re-running after a root-owned Phase 1
+chmod a+rw "${MARKER_DIR}"/* 2>/dev/null || true
 
 # ============================================================
 # Privilege handling
@@ -236,11 +241,19 @@ run_phase() {
         else
             bash "${pscript}"
         fi
+        # After Phase 1 (root), fix permissions so the regular user can
+        # write to the shared log file and marker directory
+        chmod a+rw "${MARKER_DIR}" 2>/dev/null || true
+        chmod a+rw "${MARKER_DIR}"/* 2>/dev/null || true
+        chmod a+rw "${LOG_FILE}" 2>/dev/null || true
     else
         # Phases 2-5 must run as regular user (nvm, pip, bench, systemd --user)
         if [[ "$(id -u)" -eq 0 && -n "${SUDO_USER:-}" ]]; then
             log_info "Dropping privileges to ${REAL_USER} for phase ${phase_num}"
             su - "${REAL_USER}" -c "
+                set -a
+                source '${ENV_FILE}'
+                set +a
                 export ENV_FILE='${ENV_FILE}'
                 cd '${SCRIPT_DIR}' && bash '${pscript}'
             "

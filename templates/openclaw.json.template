@@ -61,7 +61,6 @@
     }
   },
   "hooks": {
-    "enabled": true,
     "internal": {
       "enabled": true,
       "entries": {

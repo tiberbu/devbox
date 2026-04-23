@@ -27,6 +27,11 @@ export NC=$'\033[0m'
 # ============================================================
 _ensure_log_dir() {
     mkdir -p "${MARKER_DIR}" 2>/dev/null || true
+    # Ensure we can write to the log file even if the directory was
+    # created by root (Phase 1) and we're now the regular user (Phase 2+)
+    if [[ -f "${LOG_FILE}" && ! -w "${LOG_FILE}" ]]; then
+        chmod a+rw "${LOG_FILE}" 2>/dev/null || true
+    fi
 }
 
 # ============================================================

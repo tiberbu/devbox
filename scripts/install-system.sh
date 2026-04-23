@@ -40,6 +40,7 @@ APT_PACKAGES=(
     curl
     wget
     jq
+    cron
     gettext-base
     libffi-dev
     libssl-dev
