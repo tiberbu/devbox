@@ -244,7 +244,7 @@ cd ~/frappe-bench && bench --site dev.local doctor
 | Problem | Cause | Fix |
 |---------|-------|-----|
 | `openclaw status` shows gateway not running | Service crashed on startup | Check logs: `journalctl --user -u openclaw-gateway -n 50` |
-| Discord bot doesn't respond | Bot not invited or wrong channel | Verify bot is in server, try `@mention` in the right channel |
+| Discord bot doesn't respond | Bot not invited or wrong channel ID | Verify bot is in server, check `DISCORD_CHANNEL_ID` matches your dedicated channel |
 | `bench new-site` fails with "Access denied" | MariaDB auth not configured | Run: `sudo mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED VIA mysql_native_password USING PASSWORD('tiberbu123'); FLUSH PRIVILEGES;"` |
 | Claude Code says "no API key" | `~/.claude/settings.json` missing | Re-run Phase 5: `sudo -E ./bootstrap.sh --phase 5` |
 | `openclaw gateway run` fails with "hooks.token" | Stale config from older version | Delete `~/.openclaw/openclaw.json` and re-run Phase 4 |
@@ -324,7 +324,7 @@ devbox/
 3. **Service restart loops** — Gateway service now uses `openclaw gateway run` (foreground) instead of `gateway start` which delegates to systemctl. Added `OPENCLAW_NO_RESPAWN=1`, increased `RestartSec` to 60s
 4. **MariaDB password auth** — `install-bench.sh` now runs `ALTER USER` to enable `mysql_native_password` auth before `bench new-site`, fixing "Access denied" on TCP connections
 5. **Service startup timeout** — Increased `wait_for_service` from 10s to 90s with port-listening check (gateway needs ~45s to fully boot)
-6. **Docs** — Added Presence Intent to bot setup, documented `@mention` requirement, clarified `sudo -E` usage
+6. **Docs** — Added Presence Intent to bot setup, documented dedicated channel setup, clarified `sudo -E` usage
 
 ### 2026-04-19 — Initial release
 
