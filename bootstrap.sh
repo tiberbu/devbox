@@ -159,21 +159,6 @@ if [[ "$(id -u)" -eq 0 && -n "${SUDO_USER:-}" ]]; then
     log_info "Running as root (via sudo) — real user: ${REAL_USER}, HOME: ${HOME}"
 fi
 
-# run_as_user CMD [ARGS...]
-# Executes command as $REAL_USER if we are currently root; otherwise runs directly.
-run_as_user() {
-    if [[ "$(id -u)" -eq 0 && -n "${SUDO_USER:-}" ]]; then
-        su - "${REAL_USER}" -c "cd '${SCRIPT_DIR}' && source scripts/_common.sh && load_env_file '${ENV_FILE}' && $*"
-    else
-        "$@"
-    fi
-}
-
-# ============================================================
-# Environment loading and credential validation
-# (load_env_file, validate_credentials, REQUIRED_VARS — defined in scripts/_common.sh)
-# ============================================================
-
 # ============================================================
 # Phase definitions (functions to avoid associative arrays)
 # ============================================================
@@ -205,11 +190,51 @@ phase_script() {
 readonly TOTAL_PHASES=5
 
 # ============================================================
+# Progress spinner — shows activity while a phase runs
+# ============================================================
+SPINNER_PID=""
+
+# start_spinner "message"
+start_spinner() {
+    local msg="${1:-Running}"
+    (
+        local frames=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏')
+        local i=0
+        local elapsed=0
+        while true; do
+            printf '\r  %s %s (%ds elapsed)   ' "${frames[$i]}" "${msg}" "${elapsed}"
+            i=$(( (i + 1) % ${#frames[@]} ))
+            sleep 1
+            elapsed=$(( elapsed + 1 ))
+        done
+    ) &
+    SPINNER_PID=$!
+    disown "${SPINNER_PID}" 2>/dev/null || true
+}
+
+# stop_spinner [exit_code]
+stop_spinner() {
+    local exit_code="${1:-0}"
+    if [[ -n "${SPINNER_PID}" ]]; then
+        kill "${SPINNER_PID}" 2>/dev/null || true
+        wait "${SPINNER_PID}" 2>/dev/null || true
+        SPINNER_PID=""
+    fi
+    printf '\r%*s\r' 80 ""  # Clear spinner line
+}
+
+# ============================================================
+# Phase results tracking (for final summary)
+# ============================================================
+declare -a PHASE_RESULTS=()
+declare -a PHASE_TIMES=()
+
+# ============================================================
 # Phase runner
 # ============================================================
 
 # run_phase PHASE_NUM
-# Executes a single phase with timing and dry-run support.
+# Executes a single phase with timing, progress spinner, and clear status.
 run_phase() {
     local phase_num="$1"
     local pname
@@ -220,26 +245,40 @@ run_phase() {
     local phase_start
     phase_start="$(date +%s)"
 
-    log_phase_start "${phase_num}" "${TOTAL_PHASES}" "${pname}"
+    # Clear phase banner
+    printf '\n'
+    printf '%s╔══════════════════════════════════════════════════╗%s\n' "${BLUE}" "${NC}"
+    printf '%s║  [%s/%s] %-42s  ║%s\n' "${BLUE}" "${phase_num}" "${TOTAL_PHASES}" "${pname}" "${NC}"
+    printf '%s╚══════════════════════════════════════════════════╝%s\n' "${BLUE}" "${NC}"
+    printf '%s [PHASE] ===== Phase %s/%s: %s =====\n' \
+        "$(date '+%Y-%m-%d %H:%M:%S')" "${phase_num}" "${TOTAL_PHASES}" "${pname}" >> "${LOG_FILE}"
 
     if [[ "${DRY_RUN}" == "true" ]]; then
         log_info "[DRY-RUN] Would execute: ${pscript}"
-        log_phase_end "${phase_num}" "${TOTAL_PHASES}" "${pname}" "0 (dry-run)"
+        PHASE_RESULTS+=("SKIP")
+        PHASE_TIMES+=("0")
         return 0
     fi
 
     if [[ ! -f "${pscript}" ]]; then
         log_error "Phase script not found: ${pscript}"
+        PHASE_RESULTS+=("FAIL")
+        PHASE_TIMES+=("0")
         return 1
     fi
 
+    # Start progress spinner
+    start_spinner "Phase ${phase_num}: ${pname}"
+
+    # Run the phase script, capturing exit code without letting set -e kill us
+    local phase_exit=0
     if [[ "${phase_num}" -eq 1 ]]; then
         # Phase 1 needs root (apt, MariaDB, Redis, wkhtmltopdf)
         if [[ "$(id -u)" -ne 0 ]]; then
             log_info "Phase 1 requires root — re-running with sudo"
-            sudo -E bash "${pscript}"
+            sudo -E bash "${pscript}" >> "${LOG_FILE}" 2>&1 || phase_exit=$?
         else
-            bash "${pscript}"
+            bash "${pscript}" >> "${LOG_FILE}" 2>&1 || phase_exit=$?
         fi
         # After Phase 1 (root), fix permissions so the regular user can
         # write to the shared log file and marker directory
@@ -252,22 +291,88 @@ run_phase() {
             log_info "Dropping privileges to ${REAL_USER} for phase ${phase_num}"
             su - "${REAL_USER}" -c "
                 set -a
-                source '${ENV_FILE}'
+                source '${ENV_FILE}' 2>/dev/null || true
                 set +a
                 export ENV_FILE='${ENV_FILE}'
                 cd '${SCRIPT_DIR}' && bash '${pscript}'
-            "
+            " >> "${LOG_FILE}" 2>&1 || phase_exit=$?
         else
-            bash "${pscript}"
+            bash "${pscript}" >> "${LOG_FILE}" 2>&1 || phase_exit=$?
         fi
     fi
 
+    # Stop spinner
+    stop_spinner "${phase_exit}"
+
+    # Calculate elapsed time
     local phase_end
     local elapsed
     phase_end="$(date +%s)"
     elapsed=$(( phase_end - phase_start ))
 
-    log_phase_end "${phase_num}" "${TOTAL_PHASES}" "${pname}" "${elapsed}"
+    PHASE_TIMES+=("${elapsed}")
+
+    # Print result
+    if [[ "${phase_exit}" -eq 0 ]]; then
+        printf '%s╔══════════════════════════════════════════════════╗%s\n' "${GREEN}" "${NC}"
+        printf '%s║  ✓ [%s/%s] %-38s    ║%s\n' "${GREEN}" "${phase_num}" "${TOTAL_PHASES}" "${pname} — DONE (${elapsed}s)" "${NC}"
+        printf '%s╚══════════════════════════════════════════════════╝%s\n' "${GREEN}" "${NC}"
+        PHASE_RESULTS+=("OK")
+        printf '%s [PHASE] ===== Phase %s/%s: %s complete (%ss) =====\n' \
+            "$(date '+%Y-%m-%d %H:%M:%S')" "${phase_num}" "${TOTAL_PHASES}" "${pname}" "${elapsed}" >> "${LOG_FILE}"
+    else
+        printf '%s╔══════════════════════════════════════════════════╗%s\n' "${RED}" "${NC}"
+        printf '%s║  ✗ [%s/%s] %-38s    ║%s\n' "${RED}" "${phase_num}" "${TOTAL_PHASES}" "${pname} — FAILED (exit ${phase_exit})" "${NC}"
+        printf '%s╚══════════════════════════════════════════════════╝%s\n' "${RED}" "${NC}"
+        printf '\n'
+        printf '%s  Last 30 lines from log:%s\n' "${YELLOW}" "${NC}"
+        printf '%s  ─────────────────────────────────────────────%s\n' "${YELLOW}" "${NC}"
+        tail -30 "${LOG_FILE}" | sed 's/^/  /'
+        printf '%s  ─────────────────────────────────────────────%s\n' "${YELLOW}" "${NC}"
+        printf '  Full log: %s\n' "${LOG_FILE}"
+        PHASE_RESULTS+=("FAIL")
+        printf '%s [PHASE] ===== Phase %s/%s: %s FAILED (exit %s, %ss) =====\n' \
+            "$(date '+%Y-%m-%d %H:%M:%S')" "${phase_num}" "${TOTAL_PHASES}" "${pname}" "${phase_exit}" "${elapsed}" >> "${LOG_FILE}"
+        return "${phase_exit}"
+    fi
+}
+
+# ============================================================
+# Final summary table
+# ============================================================
+print_summary() {
+    local total_elapsed="$1"
+    local i pname status elapsed color
+
+    printf '\n'
+    printf '%s━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━%s\n' "${BLUE}" "${NC}"
+    printf '%s  BOOTSTRAP SUMMARY                                     %s\n' "${BLUE}" "${NC}"
+    printf '%s━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━%s\n' "${BLUE}" "${NC}"
+    printf '\n'
+    printf '  %-4s %-30s %-10s %s\n' "#" "Phase" "Status" "Time"
+    printf '  %-4s %-30s %-10s %s\n' "──" "──────────────────────────────" "────────" "────"
+
+    for i in $(seq 1 "${#PHASE_RESULTS[@]}"); do
+        local idx=$(( i - 1 ))
+        pname="$(phase_name "${i}")"
+        status="${PHASE_RESULTS[$idx]}"
+        elapsed="${PHASE_TIMES[$idx]}"
+
+        case "${status}" in
+            OK)   color="${GREEN}"; status="✓ Done" ;;
+            FAIL) color="${RED}";   status="✗ Failed" ;;
+            SKIP) color="${YELLOW}"; status="⊘ Skipped" ;;
+            *)    color="${NC}";    status="? Unknown" ;;
+        esac
+
+        printf '  %-4s %-30s %s%-10s%s %ss\n' "${i}" "${pname}" "${color}" "${status}" "${NC}" "${elapsed}"
+    done
+
+    printf '\n'
+    printf '  Total elapsed: %ss\n' "${total_elapsed}"
+    printf '  Full log: %s\n' "${LOG_FILE}"
+    printf '\n'
+    printf '%s━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━%s\n' "${BLUE}" "${NC}"
 }
 
 # ============================================================
@@ -277,9 +382,11 @@ main() {
     local bootstrap_start
     bootstrap_start="$(date +%s)"
 
-    log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    log_info "  Tiberbu DevBox Bootstrap"
-    log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    printf '\n'
+    printf '%s━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━%s\n' "${BLUE}" "${NC}"
+    printf '%s  Tiberbu DevBox Bootstrap                              %s\n' "${BLUE}" "${NC}"
+    printf '%s━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━%s\n' "${BLUE}" "${NC}"
+    printf '\n'
     log_info "Script directory : ${SCRIPT_DIR}"
     log_info "Runtime directory: ${MARKER_DIR}"
     log_info "Log file         : ${LOG_FILE}"
@@ -300,6 +407,7 @@ main() {
     validate_credentials "${ENV_FILE}"
 
     # Step 3: Execute phases
+    local failed=false
     if [[ "${DRY_RUN}" == "true" ]]; then
         # Print plan
         local i pname pscript
@@ -323,23 +431,32 @@ main() {
         log_success "Dry-run complete — all credentials valid, plan printed above"
     elif [[ -n "${PHASE_FILTER}" ]]; then
         log_info "Running single phase: ${PHASE_FILTER}"
-        run_phase "${PHASE_FILTER}"
+        run_phase "${PHASE_FILTER}" || failed=true
     else
         local i
         for i in $(seq 1 "${TOTAL_PHASES}"); do
-            run_phase "${i}"
+            if ! run_phase "${i}"; then
+                failed=true
+                log_error "Phase ${i} failed — stopping bootstrap"
+                break
+            fi
         done
     fi
 
-    # Print total elapsed time
+    # Print total elapsed time + summary
     local bootstrap_end
     local elapsed
     bootstrap_end="$(date +%s)"
     elapsed=$(( bootstrap_end - bootstrap_start ))
-    printf '\n'
-    log_success "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    log_success "  Bootstrap complete — total elapsed time: ${elapsed}s"
-    log_success "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+    print_summary "${elapsed}"
+
+    if [[ "${failed}" == "true" ]]; then
+        printf '%s  ✗ Bootstrap FAILED — review log above and re-run%s\n\n' "${RED}" "${NC}"
+        exit 1
+    else
+        printf '%s  ✓ Bootstrap COMPLETE — all phases successful%s\n\n' "${GREEN}" "${NC}"
+    fi
 }
 
 main
