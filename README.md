@@ -2,7 +2,7 @@
 
 One-script setup for the full Tiberbu development environment on a fresh Ubuntu EC2 instance.
 
-**Stack:** OpenClaw + Discord + Claude (Bedrock) + Claude Code Studio + Frappe Bench + Vue Frontend
+**Stack:** OpenClaw + Discord + Claude (Bedrock) + Claude Code Studio + Frappe Bench + VS Code (browser) + Vue Frontend
 
 ## Prerequisites
 
@@ -17,7 +17,7 @@ One-script setup for the full Tiberbu development environment on a fresh Ubuntu 
 
 - Recommended: `t3.xlarge` (4 vCPU, 16GB RAM) or larger
 - Storage: 50GB+ gp3
-- Security group: SSH (22) inbound only
+- Security group: SSH (22), Claude Studio (3000), VS Code (8443) inbound
 
 ### 2. SSH in and create your config
 
@@ -41,6 +41,8 @@ GITHUB_TOKEN=ghp_your-github-token
 # MARIADB_ROOT_PASSWORD=tiberbu123
 # CLAUDE_STUDIO_PORT=3000
 # OPENCLAW_PORT=18789
+# VSCODE_PORT=8443
+# VSCODE_PASSWORD=your-vscode-password
 EOF
 
 # Lock down permissions (file contains secrets)
@@ -77,6 +79,7 @@ sudo -E ./bootstrap.sh
 | 3 | Frappe Bench (bench init + site creation) | ~80s |
 | 4 | OpenClaw + Discord gateway (npm, config, systemd) | ~50s |
 | 5 | Claude Code Studio + Claude Code CLI (clone, build, Bedrock config) | ~80s |
+| 6 | VS Code via code-server (browser IDE on port 8443) | ~30s |
 
 ### 4. Verify it worked
 
@@ -87,11 +90,24 @@ openclaw status
 # Check Claude Studio is running
 systemctl status claude-studio
 
+# Check VS Code is running
+systemctl status code-server@ubuntu
+
 # Check Frappe bench
 cd ~/frappe-bench && bench --site dev.local doctor
 ```
 
-### 5. Set up Claude Code Studio
+### 5. Access VS Code in your browser
+
+1. Open `http://<your-ec2-ip>:8443` in your browser
+2. Enter the password you set in `VSCODE_PASSWORD` (default: `changeme`)
+3. You're in a full VS Code IDE with terminal, extensions, and file access
+
+> **Security:** Change the default password in `~/.tiberbu-env` before running bootstrap. The config lives at `~/.config/code-server/config.yaml` if you need to change it later.
+
+> **Port forwarding alternative:** `ssh -L 8443:localhost:8443 ubuntu@<ip>` then access `http://localhost:8443`
+
+### 6. Set up Claude Code Studio
 
 1. Open `http://<your-ec2-ip>:3000` in your browser (or use SSH port forwarding: `ssh -L 3000:localhost:3000 ubuntu@<ip>`)
 2. You'll be redirected to the **Setup** page on first visit
@@ -100,7 +116,7 @@ cd ~/frappe-bench && bench --site dev.local doctor
 
 > **Note:** No default password is set — you create it on first access.
 
-### 6. Start working from Discord
+### 7. Start working from Discord
 
 Once complete, the agent is live in your designated Discord channel. Just type a message — **no @mention needed**. The bot is configured to respond to all messages in that specific channel.
 
@@ -119,6 +135,7 @@ In other channels on the server, the bot won't respond (it only listens in the c
 | **Claude Code Studio** | v5.x from GitHub |
 | **Claude Code CLI** | Configured for Bedrock (no Anthropic API key needed) |
 | **wkhtmltopdf** | 0.12.6 |
+| **code-server** | Latest (VS Code in browser) |
 
 ## Getting Your Credentials
 
@@ -209,7 +226,7 @@ This is the channel where the bot responds to **every message** (no @mention nee
 # Validate credentials without installing anything
 sudo -E ./bootstrap.sh --dry-run
 
-# Run only a specific phase (1-5)
+# Run only a specific phase (1-6)
 sudo -E ./bootstrap.sh --phase 3
 
 # Use a custom env file location
@@ -257,6 +274,8 @@ cd ~/frappe-bench && bench --site dev.local doctor
 | `bench new-site` fails with "Access denied" | MariaDB auth not configured | Run: `sudo mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED VIA mysql_native_password USING PASSWORD('tiberbu123'); FLUSH PRIVILEGES;"` |
 | Claude Code says "no API key" | `~/.claude/settings.json` missing | Re-run Phase 5: `sudo -E ./bootstrap.sh --phase 5` |
 | `openclaw gateway run` fails with "hooks.token" | Stale config from older version | Delete `~/.openclaw/openclaw.json` and re-run Phase 4 |
+| VS Code shows "502" or won't load | code-server service not running | `sudo systemctl restart code-server@ubuntu` then check `journalctl -u code-server@ubuntu -n 30` |
+| Can't reach VS Code from browser | Port 8443 not open in firewall | Add inbound rule for port 8443 in your security group/firewall |
 
 ### Re-running phases
 
@@ -283,7 +302,9 @@ sudo -E ./bootstrap.sh
 | `~/.claude/settings.json` | Claude Code CLI config (Bedrock) |
 | `~/frappe-bench/` | Frappe framework + bench site |
 | `~/claude-code-studio/` | Claude Code Studio app |
+| `~/.config/code-server/config.yaml` | VS Code server config |
 | `~/.config/systemd/user/openclaw-gateway.service` | OpenClaw systemd unit |
+| `/usr/lib/systemd/system/code-server@.service` | VS Code systemd unit |
 | `/etc/systemd/system/claude-studio.service` | Claude Studio systemd unit |
 | `/var/tmp/devbox/` | Bootstrap logs + phase markers |
 
@@ -299,6 +320,7 @@ devbox/
 │   ├── install-bench.sh                   # Phase 3: Frappe Bench + site
 │   ├── install-openclaw.sh                # Phase 4: OpenClaw + Discord
 │   ├── install-studio.sh                  # Phase 5: Claude Studio + Claude Code CLI
+│   ├── install-vscode.sh                  # Phase 6: VS Code (code-server)
 │   └── verify.sh                          # Post-install verification
 ├── templates/
 │   ├── openclaw.json.template             # OpenClaw config (Bedrock + Discord)
@@ -315,6 +337,16 @@ devbox/
 ```
 
 ## Changelog
+
+### 2026-04-29 — Phase 6 (VS Code) + bootstrap reliability
+
+- **Phase 6: VS Code (code-server)** — Browser-based VS Code IDE on port 8443 with password auth
+- **Bootstrap progress fix** — Phases now run sequentially with explicit exit code capture, fixing silent exits after Phase 2
+- **Animated spinner** — Shows elapsed time while each phase runs
+- **Summary table** — Final report showing all phases with ✓/✗ status and timing
+- **Failure diagnostics** — On failure, last 30 log lines shown inline (no need to manually check log file)
+- **New env vars:** `VSCODE_PORT` (default 8443), `VSCODE_PASSWORD` (default changeme)
+- **Total phases:** Now 6 (was 5)
 
 ### 2026-04-23 — Docker integration testing + fixes
 
