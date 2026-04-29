@@ -67,6 +67,8 @@ Environment file (~/.tiberbu-env)
     MARIADB_ROOT_PASSWORD   MariaDB root password     (default: tiberbu123)
     CLAUDE_STUDIO_PORT      Claude Studio HTTP port   (default: 3000)
     OPENCLAW_PORT           OpenClaw gateway port     (default: 18789)
+    VSCODE_PORT             VS Code server port       (default: 8443)
+    VSCODE_PASSWORD         VS Code auth password     (default: changeme)
 
 Phases:
   1 — System dependencies (apt, MariaDB, Redis, wkhtmltopdf)
@@ -74,6 +76,7 @@ Phases:
   3 — Frappe Bench (bench init, new-site)
   4 — OpenClaw + Discord (npm, config, systemd)
   5 — Claude Code Studio (git clone, build, systemd)
+  6 — VS Code via code-server (browser IDE)
 
 Log file: /var/tmp/devbox/bootstrap.log
 
@@ -126,8 +129,8 @@ done
 
 # Validate --phase value (must be 1-5)
 if [[ -n "${PHASE_FILTER}" ]]; then
-    if ! [[ "${PHASE_FILTER}" =~ ^[1-5]$ ]]; then
-        printf 'Error: --phase must be a number between 1 and 5 (got: %s)\n' "${PHASE_FILTER}" >&2
+    if ! [[ "${PHASE_FILTER}" =~ ^[1-6]$ ]]; then
+        printf 'Error: --phase must be a number between 1 and 6 (got: %s)\n' "${PHASE_FILTER}" >&2
         exit 1
     fi
 fi
@@ -171,6 +174,7 @@ phase_name() {
         3) printf 'Frappe Bench' ;;
         4) printf 'OpenClaw + Discord Gateway' ;;
         5) printf 'Claude Code Studio' ;;
+        6) printf 'VS Code (code-server)' ;;
         *) printf 'Unknown Phase' ;;
     esac
 }
@@ -183,11 +187,12 @@ phase_script() {
         3) printf '%s/scripts/install-bench.sh' "${SCRIPT_DIR}" ;;
         4) printf '%s/scripts/install-openclaw.sh' "${SCRIPT_DIR}" ;;
         5) printf '%s/scripts/install-studio.sh' "${SCRIPT_DIR}" ;;
+        6) printf '%s/scripts/install-vscode.sh' "${SCRIPT_DIR}" ;;
         *) printf '' ;;
     esac
 }
 
-readonly TOTAL_PHASES=5
+readonly TOTAL_PHASES=6
 
 # ============================================================
 # Progress spinner — shows activity while a phase runs

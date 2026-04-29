@@ -242,9 +242,12 @@ load_env_file() {
     : "${MARIADB_ROOT_PASSWORD:=tiberbu123}"
     : "${CLAUDE_STUDIO_PORT:=3000}"
     : "${OPENCLAW_PORT:=18789}"
+    : "${VSCODE_PORT:=8443}"
+    : "${VSCODE_PASSWORD:=changeme}"
 
     export BEDROCK_REGION BEDROCK_MODEL FRAPPE_BRANCH BENCH_SITE
     export MARIADB_ROOT_PASSWORD CLAUDE_STUDIO_PORT OPENCLAW_PORT
+    export VSCODE_PORT VSCODE_PASSWORD
 
     log_success "Env file loaded; optional defaults applied"
 }
