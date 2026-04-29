@@ -137,7 +137,7 @@ fi
 
 # ============================================================
 # Ensure runtime directory exists and is writable by the real user
-# (Phase 1 runs as root, Phases 2-5 run as the regular user —
+# (Phase 1 runs as root, Phases 2-6 run as the regular user —
 # both need to write log files and marker files here)
 # ============================================================
 mkdir -p "${MARKER_DIR}"
@@ -146,20 +146,58 @@ chmod 1777 "${MARKER_DIR}" 2>/dev/null || true
 chmod a+rw "${MARKER_DIR}"/* 2>/dev/null || true
 
 # ============================================================
+# User provisioning
+# Ensures the target user (default: ubuntu) exists.
+# On providers like Hetzner, only root exists out of the box.
+# On AWS EC2, ubuntu user exists by default.
+# This runs early (before phases) so privilege dropping works.
+# ============================================================
+: "${DEVBOX_USER:=ubuntu}"
+
+ensure_user() {
+    if id "${DEVBOX_USER}" &>/dev/null; then
+        log_info "User '${DEVBOX_USER}' already exists"
+    else
+        if [[ "$(id -u)" -ne 0 ]]; then
+            log_error "User '${DEVBOX_USER}' does not exist and we are not root — cannot create."
+            log_error "Run with sudo or create the user first: sudo adduser ${DEVBOX_USER}"
+            exit 1
+        fi
+        log_info "User '${DEVBOX_USER}' not found — creating..."
+        adduser --disabled-password --gecos "Tiberbu DevBox" "${DEVBOX_USER}"
+        # Grant sudo without password (needed for service management)
+        echo "${DEVBOX_USER} ALL=(ALL) NOPASSWD:ALL" > "/etc/sudoers.d/${DEVBOX_USER}"
+        chmod 440 "/etc/sudoers.d/${DEVBOX_USER}"
+        log_success "User '${DEVBOX_USER}' created with passwordless sudo"
+    fi
+}
+
+# Run user provisioning if we are root
+if [[ "$(id -u)" -eq 0 ]]; then
+    ensure_user
+fi
+
+# ============================================================
 # Privilege handling
 # Phase 1 (system deps) needs root for apt/MariaDB/systemd.
-# Phases 2-5 MUST run as a regular user (nvm, bench, pip, systemd --user).
+# Phases 2-6 MUST run as a regular user (nvm, bench, pip, systemd --user).
 #
 # If invoked via sudo, detect the real user from SUDO_USER and re-exec
-# phases 2-5 with `su - $REAL_USER`.
+# phases 2-6 with `su - $REAL_USER`.
+# On providers where root runs directly (Hetzner), SUDO_USER won't be set
+# so we fall back to DEVBOX_USER.
 # ============================================================
-REAL_USER="${SUDO_USER:-$(whoami)}"
+if [[ "$(id -u)" -eq 0 ]]; then
+    REAL_USER="${SUDO_USER:-${DEVBOX_USER}}"
+else
+    REAL_USER="$(whoami)"
+fi
 REAL_HOME="$(eval echo "~${REAL_USER}")"
 
-# Override HOME for template rendering when running as root via sudo
-if [[ "$(id -u)" -eq 0 && -n "${SUDO_USER:-}" ]]; then
+# Override HOME for template rendering when running as root
+if [[ "$(id -u)" -eq 0 ]]; then
     export HOME="${REAL_HOME}"
-    log_info "Running as root (via sudo) — real user: ${REAL_USER}, HOME: ${HOME}"
+    log_info "Running as root — target user: ${REAL_USER}, HOME: ${HOME}"
 fi
 
 # ============================================================
@@ -291,8 +329,8 @@ run_phase() {
         chmod a+rw "${MARKER_DIR}"/* 2>/dev/null || true
         chmod a+rw "${LOG_FILE}" 2>/dev/null || true
     else
-        # Phases 2-5 must run as regular user (nvm, pip, bench, systemd --user)
-        if [[ "$(id -u)" -eq 0 && -n "${SUDO_USER:-}" ]]; then
+        # Phases 2-6 must run as regular user (nvm, pip, bench, systemd --user)
+        if [[ "$(id -u)" -eq 0 ]]; then
             log_info "Dropping privileges to ${REAL_USER} for phase ${phase_num}"
             su - "${REAL_USER}" -c "
                 set -a

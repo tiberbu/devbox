@@ -6,20 +6,32 @@ One-script setup for the full Tiberbu development environment on a fresh Ubuntu 
 
 ## Prerequisites
 
-- **Ubuntu 24.04** EC2 instance (or any Ubuntu 24.04 server with systemd)
+- **Ubuntu 24.04** server with systemd (AWS EC2, Hetzner, DigitalOcean, any VPS)
+- **Root or sudo access** (the script creates an `ubuntu` user if one doesn't exist)
 - **AWS account** with Bedrock model access enabled
 - **Discord account** with a server you can add bots to
 - **GitHub account** with a personal access token
 
 ## Quick Start
 
-### 1. Launch a fresh Ubuntu 24.04 EC2 instance
+### 1. Launch a fresh Ubuntu 24.04 server
 
+**AWS EC2:**
 - Recommended: `t3.xlarge` (4 vCPU, 16GB RAM) or larger
 - Storage: 50GB+ gp3
 - Security group: SSH (22), Claude Studio (3000), VS Code (8443) inbound
 
+**Hetzner Cloud:**
+- Recommended: `CPX31` (4 vCPU, 8GB RAM) or larger
+- Image: Ubuntu 24.04
+- Firewall: Allow ports 22, 3000, 8443 inbound
+
+> **Note:** On Hetzner, only `root` exists by default. The bootstrap script will automatically create the `ubuntu` user. On AWS EC2, `ubuntu` already exists and is used as-is.
+
 ### 2. SSH in and create your config
+
+On **Hetzner** (root login): `ssh root@<ip>`  
+On **AWS EC2**: `ssh ubuntu@<ip>`
 
 ```bash
 cat > ~/.tiberbu-env << 'EOF'
@@ -34,6 +46,7 @@ DISCORD_USER_ID=your-discord-user-id
 GITHUB_TOKEN=ghp_your-github-token
 
 # === OPTIONAL (defaults shown) ===
+# DEVBOX_USER=ubuntu
 # BEDROCK_REGION=us-west-1
 # BEDROCK_MODEL=global.anthropic.claude-opus-4-6-v1
 # FRAPPE_BRANCH=version-15
@@ -51,24 +64,25 @@ chmod 600 ~/.tiberbu-env
 
 ### 3. Run the bootstrap
 
-The script needs `sudo` for Phase 1 (apt packages, MariaDB, Redis). Phases 2–5 run as your regular user automatically.
+The script needs root for Phase 1 (apt packages, MariaDB, Redis) and to create the `ubuntu` user if it doesn't exist. Phases 2–6 run as the `ubuntu` user automatically.
 
-```bash
-curl -sL https://raw.githubusercontent.com/tiberbu/devbox/main/bootstrap.sh | sudo -E bash
-```
-
-Or clone and run:
-
+**On Hetzner (logged in as root):**
 ```bash
 git clone https://github.com/tiberbu/devbox.git
 cd devbox
-chmod +x bootstrap.sh
+./bootstrap.sh
+```
+
+**On AWS EC2 (logged in as ubuntu):**
+```bash
+git clone https://github.com/tiberbu/devbox.git
+cd devbox
 sudo -E ./bootstrap.sh
 ```
 
-> **Why `sudo -E`?** Phase 1 installs system packages as root. The `-E` flag preserves your environment so `~/.tiberbu-env` is found. Phases 2–5 automatically drop back to your regular user for nvm, pip, bench, and systemd user services.
+> **Why `sudo -E`?** The `-E` flag preserves your environment so `~/.tiberbu-env` is found. On Hetzner where you're already root, no sudo needed.
 
-**Expected duration:** ~5 minutes on a `t3.xlarge` instance.
+> **Custom user:** Set `DEVBOX_USER=myuser` in your environment to use a different user name than `ubuntu`.
 
 **What happens in each phase:**
 
