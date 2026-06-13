@@ -12,9 +12,10 @@
 
 [core]
 output_folder = "_bmad-output"
+project_name = "devbox"
+document_output_language = "English"
 
 [modules.bmm]
-project_name = "devbox"
 planning_artifacts = "{project-root}/_bmad-output/planning-artifacts"
 implementation_artifacts = "{project-root}/_bmad-output/implementation-artifacts"
 project_knowledge = "{project-root}/docs"
