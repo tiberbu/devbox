@@ -1,4 +1,5 @@
 {
+  "_comment": "Configure projects after install. BMAD workflows require at least one project workdir.",
   "mcpServers": {},
   "skills": {},
   "slashCommands": [],

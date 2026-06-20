@@ -29,7 +29,7 @@ trap 'error_handler "${BASH_SOURCE[0]}" "${LINENO}" "$?"' ERR
 # ============================================================
 readonly PHASE_NUM=5
 readonly PHASE_NAME="Claude Code Studio"
-readonly TOTAL_PHASES=5
+readonly TOTAL_PHASES=6
 readonly TOTAL_STEPS=8
 
 # Defensive defaults for optional/system variables

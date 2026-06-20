@@ -4,11 +4,21 @@
     "AWS_ACCESS_KEY_ID": "${AWS_ACCESS_KEY_ID}",
     "AWS_SECRET_ACCESS_KEY": "${AWS_SECRET_ACCESS_KEY}",
     "AWS_REGION": "${BEDROCK_REGION}",
-    "ANTHROPIC_MODEL": "${BEDROCK_MODEL}",
-    "ANTHROPIC_DEFAULT_SONNET_MODEL": "${BEDROCK_MODEL}",
+    "ANTHROPIC_MODEL": "${BEDROCK_SONNET_MODEL}",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "${BEDROCK_HAIKU_MODEL}",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "${BEDROCK_OPUS_MODEL}",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "${BEDROCK_SONNET_MODEL}",
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+    "API_TIMEOUT_MS": "3000000",
     "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
   },
-  "model": "sonnet",
+  "model": "opus",
+  "enabledPlugins": {
+    "voltagent-core-dev@voltagent-subagents": true,
+    "voltagent-lang@voltagent-subagents": true,
+    "voltagent-qa-sec@voltagent-subagents": true,
+    "voltagent-dev-exp@voltagent-subagents": true
+  },
   "autoUpdatesChannel": "latest",
   "skipDangerousModePermissionPrompt": true
 }

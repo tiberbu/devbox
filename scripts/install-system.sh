@@ -26,7 +26,7 @@ trap 'error_handler "${BASH_SOURCE[0]}" "${LINENO}" "$?"' ERR
 # ============================================================
 readonly PHASE_NUM=1
 readonly PHASE_NAME="System Dependencies"
-readonly TOTAL_PHASES=5
+readonly TOTAL_PHASES=6
 readonly MARIADB_CNF="/etc/mysql/mariadb.conf.d/99-devbox.cnf"
 
 APT_PACKAGES=(

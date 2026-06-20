@@ -26,7 +26,7 @@ trap 'error_handler "${BASH_SOURCE[0]}" "${LINENO}" "$?"' ERR
 # ============================================================
 readonly PHASE_NUM=2
 readonly PHASE_NAME="Node.js"
-readonly TOTAL_PHASES=5
+readonly TOTAL_PHASES=6
 readonly DEVBOX_NVM_VERSION="v0.40.3"
 readonly NODE_VERSION="24"
 
@@ -206,6 +206,21 @@ BASHRC_NVM
 }
 
 # ============================================================
+# AC-5b: Create /usr/local/bin/node symlink
+# systemd services and CCS auto-generated scripts reference /usr/local/bin/node.
+# ============================================================
+create_node_symlink() {
+    local node_path
+    node_path="$(command -v node)"
+    if [[ ! -L /usr/local/bin/node ]] && [[ ! -f /usr/local/bin/node ]]; then
+        sudo ln -sf "${node_path}" /usr/local/bin/node
+        log_success "Created symlink /usr/local/bin/node -> ${node_path}"
+    else
+        log_info "/usr/local/bin/node already exists — skipping"
+    fi
+}
+
+# ============================================================
 # AC-6: Completion marker
 # ============================================================
 complete_phase() {
@@ -227,6 +242,7 @@ main() {
     install_node
     install_yarn
     configure_bashrc
+    create_node_symlink
     complete_phase
 
     local phase_end elapsed

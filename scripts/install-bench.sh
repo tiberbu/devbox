@@ -29,7 +29,7 @@ trap 'error_handler "${BASH_SOURCE[0]}" "${LINENO}" "$?"' ERR
 # ============================================================
 readonly PHASE_NUM=3
 readonly PHASE_NAME="Frappe Bench"
-readonly TOTAL_PHASES=5
+readonly TOTAL_PHASES=6
 
 # Defaults — all overridable via environment variables
 : "${FRAPPE_BRANCH:=version-15}"

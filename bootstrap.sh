@@ -60,8 +60,11 @@ Environment file (~/.tiberbu-env)
     GITHUB_TOKEN            GitHub personal access token
 
   OPTIONAL (defaults shown):
-    BEDROCK_REGION          AWS Bedrock region        (default: us-west-1)
+    BEDROCK_REGION          AWS Bedrock region        (default: eu-west-1)
     BEDROCK_MODEL           Bedrock model ID          (default: global.anthropic.claude-opus-4-6-v1)
+    BEDROCK_OPUS_MODEL      Bedrock Opus model        (default: global.anthropic.claude-opus-4-6-v1)
+    BEDROCK_SONNET_MODEL    Bedrock Sonnet model      (default: global.anthropic.claude-sonnet-4-6)
+    BEDROCK_HAIKU_MODEL     Bedrock Haiku model       (default: eu.anthropic.claude-haiku-4-5-20251001-v1:0)
     FRAPPE_BRANCH           Frappe framework branch   (default: version-15)
     BENCH_SITE              Frappe site name          (default: dev.local)
     MARIADB_ROOT_PASSWORD   MariaDB root password     (default: tiberbu123)

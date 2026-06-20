@@ -235,8 +235,11 @@ load_env_file() {
     fi
 
     # Apply defaults for optional variables (no-op if already set)
-    : "${BEDROCK_REGION:=us-west-1}"
+    : "${BEDROCK_REGION:=eu-west-1}"
     : "${BEDROCK_MODEL:=global.anthropic.claude-opus-4-6-v1}"
+    : "${BEDROCK_OPUS_MODEL:=global.anthropic.claude-opus-4-6-v1}"
+    : "${BEDROCK_SONNET_MODEL:=global.anthropic.claude-sonnet-4-6}"
+    : "${BEDROCK_HAIKU_MODEL:=eu.anthropic.claude-haiku-4-5-20251001-v1:0}"
     : "${FRAPPE_BRANCH:=version-15}"
     : "${BENCH_SITE:=dev.local}"
     : "${MARIADB_ROOT_PASSWORD:=tiberbu123}"
@@ -245,7 +248,8 @@ load_env_file() {
     : "${VSCODE_PORT:=8443}"
     : "${VSCODE_PASSWORD:=changeme}"
 
-    export BEDROCK_REGION BEDROCK_MODEL FRAPPE_BRANCH BENCH_SITE
+    export BEDROCK_REGION BEDROCK_MODEL BEDROCK_OPUS_MODEL BEDROCK_SONNET_MODEL BEDROCK_HAIKU_MODEL
+    export FRAPPE_BRANCH BENCH_SITE
     export MARIADB_ROOT_PASSWORD CLAUDE_STUDIO_PORT OPENCLAW_PORT
     export VSCODE_PORT VSCODE_PASSWORD
 

@@ -28,7 +28,7 @@ trap 'error_handler "${BASH_SOURCE[0]}" "${LINENO}" "$?"' ERR
 # ============================================================
 readonly PHASE_NUM=4
 readonly PHASE_NAME="OpenClaw + Discord"
-readonly TOTAL_PHASES=5
+readonly TOTAL_PHASES=6
 
 # Defensive defaults for optional/system variables
 : "${OPENCLAW_PORT:=18789}"
@@ -111,6 +111,40 @@ render_config() {
 
     mkdir -p "${HOME}/.openclaw"
 
+    # --- Issue 2 Fix: Create ~/.aws/credentials and ~/.aws/config ---
+    # The OpenClaw gateway reads AWS credentials via the standard AWS credential
+    # chain (AWS_PROFILE=default in gateway.systemd.env). We must create the
+    # credential files, not just have env vars.
+    mkdir -p "${HOME}/.aws"
+    if [[ ! -f "${HOME}/.aws/credentials" ]]; then
+        cat > "${HOME}/.aws/credentials" <<AWSCRED
+[default]
+aws_access_key_id = ${AWS_ACCESS_KEY_ID}
+aws_secret_access_key = ${AWS_SECRET_ACCESS_KEY}
+AWSCRED
+        chmod 600 "${HOME}/.aws/credentials"
+        log_info "Created ~/.aws/credentials"
+    else
+        log_info "~/.aws/credentials already exists — preserving"
+    fi
+    if [[ ! -f "${HOME}/.aws/config" ]]; then
+        cat > "${HOME}/.aws/config" <<AWSCONF
+[default]
+region = ${AWS_DEFAULT_REGION}
+AWSCONF
+        chmod 600 "${HOME}/.aws/config"
+        log_info "Created ~/.aws/config"
+    else
+        log_info "~/.aws/config already exists — preserving"
+    fi
+
+    # --- Issue 2 Fix: Create gateway.systemd.env ---
+    cat > "${HOME}/.openclaw/gateway.systemd.env" <<GWENV
+AWS_PROFILE=default
+GWENV
+    chmod 600 "${HOME}/.openclaw/gateway.systemd.env"
+    log_info "Created gateway.systemd.env"
+
     # Generate a random hooks token for OpenClaw webhook API
     # This token is shared with Claude Studio so it can send notifications
     OPENCLAW_HOOKS_TOKEN="$(openssl rand -hex 24)"
@@ -164,7 +198,7 @@ setup_workspace() {
 
     mkdir -p "${HOME}/.openclaw/workspace"
 
-    local workspace_files=( AGENTS.md SOUL.md TOOLS.md USER.md )
+    local workspace_files=( AGENTS.md SOUL.md TOOLS.md USER.md HEARTBEAT.md IDENTITY.md )
     for f in "${workspace_files[@]}"; do
         local src="${DEVBOX_DIR}/workspace/${f}"
         local dst="${HOME}/.openclaw/workspace/${f}"
@@ -192,6 +226,11 @@ setup_workspace() {
 install_service() {
     log_info "Step 5/5: Installing openclaw-gateway systemd user service"
 
+    # Enable linger FIRST so user services persist across sessions / reboots
+    # Must succeed before any systemctl --user commands
+    loginctl enable-linger "${USER}" \
+        || log_warn "loginctl enable-linger failed (may need sudo or already enabled)"
+
     mkdir -p "${HOME}/.config/systemd/user"
 
     # Resolve the actual nvm-versioned node binary directory
@@ -205,10 +244,6 @@ install_service() {
     render_template \
         "${DEVBOX_DIR}/templates/openclaw-gateway.service" \
         "${HOME}/.config/systemd/user/openclaw-gateway.service"
-
-    # Enable linger so user services persist across sessions / reboots
-    loginctl enable-linger "${USER}" \
-        || log_warn "loginctl enable-linger failed (may need sudo or already enabled)"
 
     systemctl --user daemon-reload
     log_info "systemctl --user daemon-reload complete"

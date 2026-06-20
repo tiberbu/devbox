@@ -58,8 +58,11 @@ Environment file (~/.tiberbu-env)
     GITHUB_TOKEN            GitHub personal access token
 
   OPTIONAL (defaults shown):
-    BEDROCK_REGION          AWS Bedrock region        (default: us-west-1)
+    BEDROCK_REGION          AWS Bedrock region        (default: eu-west-1)
     BEDROCK_MODEL           Bedrock model ID          (default: global.anthropic.claude-opus-4-6-v1)
+    BEDROCK_OPUS_MODEL      Bedrock Opus model        (default: global.anthropic.claude-opus-4-6-v1)
+    BEDROCK_SONNET_MODEL    Bedrock Sonnet model      (default: global.anthropic.claude-sonnet-4-6)
+    BEDROCK_HAIKU_MODEL     Bedrock Haiku model       (default: eu.anthropic.claude-haiku-4-5-20251001-v1:0)
     CLAUDE_STUDIO_PORT      Claude Studio HTTP port   (default: 3000)
     OPENCLAW_PORT           OpenClaw gateway port     (default: 18789)
 

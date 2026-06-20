@@ -37,22 +37,47 @@
       "mode": "token"
     },
     "port": ${OPENCLAW_PORT},
-    "bind": "loopback"
+    "bind": "loopback",
+    "tailscale": {
+      "mode": "serve",
+      "resetOnExit": false
+    },
+    "controlUi": {
+      "allowInsecureAuth": true,
+      "allowedOrigins": [
+        "http://localhost:${OPENCLAW_PORT}",
+        "http://127.0.0.1:${OPENCLAW_PORT}"
+      ]
+    },
+    "nodes": {
+      "denyCommands": [
+        "camera.snap",
+        "camera.clip",
+        "screen.record",
+        "contacts.add",
+        "calendar.add",
+        "reminders.add",
+        "sms.send",
+        "sms.search"
+      ]
+    }
+  },
+  "session": {
+    "dmScope": "per-channel-peer"
   },
   "channels": {
     "discord": {
       "enabled": true,
       "token": "${DISCORD_BOT_TOKEN}",
-      "groupPolicy": "allowlist",
+      "groupPolicy": "open",
+      "ackReactionScope": "all",
+      "allowFrom": [],
+      "contextVisibility": "all",
+      "maxLinesPerMessage": 30,
       "guilds": {
         "${DISCORD_GUILD_ID}": {
           "users": ["${DISCORD_USER_ID}"],
-          "requireMention": false,
-          "channels": {
-            "${DISCORD_CHANNEL_ID}": {
-              "enabled": true
-            }
-          }
+          "requireMention": false
         }
       },
       "streaming": {
@@ -62,6 +87,9 @@
       },
       "autoPresence": {
         "enabled": true
+      },
+      "threadBindings": {
+        "spawnAcpSessions": true
       }
     }
   },
@@ -78,7 +106,18 @@
     }
   },
   "tools": {
-    "profile": "coding"
+    "profile": "coding",
+    "sessions": {
+      "visibility": "all"
+    }
+  },
+  "auth": {
+    "profiles": {
+      "anthropic:default": {
+        "provider": "anthropic",
+        "mode": "api_key"
+      }
+    }
   },
   "plugins": {
     "entries": {
